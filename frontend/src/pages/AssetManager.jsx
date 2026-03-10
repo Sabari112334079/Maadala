@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://localhost:5000/api/assets";
-
+const API_BASE = "https://maadala.onrender.com/api/assets";
 const formatCurrency = (val) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val || 0);
 

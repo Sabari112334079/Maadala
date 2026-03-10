@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 
-const ASSETS_API      = "http://localhost:5000/api/assets";
-const LIABILITIES_API = "http://localhost:5000/api/liabilities";
-const TRANSACTIONS_API = "http://localhost:5000/api/transactions";
+const BASE_API = "https://maadala.onrender.com";
+
+const ASSETS_API = `${BASE_API}/api/assets`;
+const LIABILITIES_API = `${BASE_API}/api/liabilities`;
+const TRANSACTIONS_API = `${BASE_API}/api/transactions`;
 
 const NAV_ITEMS = [
   {
