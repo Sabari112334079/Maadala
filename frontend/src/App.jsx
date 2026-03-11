@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("vaultfolio_token");
     if (!token) return;
-    fetch("https://maadala.onrender.com/api/auth/me", {
+    fetch("http://localhost:5000/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.ok ? r.json() : null)
@@ -67,8 +67,7 @@ function App() {
   }
 
   return (
-    <div style={{ display: "flex", background: "#07080d" }}>
-      <Sidebar
+<div style={{ display: "flex", width: "100%", background: "#07080d" }}>      <Sidebar
         active={active}
         setActive={setActive}
         onLogout={handleLogout}
@@ -77,8 +76,14 @@ function App() {
         user={user}
       />
 
-      <div style={{ marginLeft: 260, minHeight: "100vh", overflowX: "hidden" }}>
-        {active === "assets"       && <AssetManager />}
+<div style={{ 
+  marginLeft: 260,
+  flex: 1,
+  minWidth: 0,
+  height: "100%",
+  minHeight: "100vh",
+  overflowY: "auto"
+}}>        {active === "assets"       && <AssetManager />}
         {active === "liabilities"  && <Liabilities />}
         {active === "networth"     && <NetWorth />}
         {active === "transactions" && <Transactions />}

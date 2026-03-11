@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
-const ASSETS_API      = "https://maadala.onrender.com/api/assets";
-const LIABILITIES_API = "https://maadala.onrender.com/api/liabilities";
-const TRANSACTIONS_API = "https://maadala.onrender.com/api/transactions";
+const ASSETS_API      = "http://localhost:5000/api/assets";
+const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+const TRANSACTIONS_API = "http://localhost:5000/api/transactions";
 
 const NAV_ITEMS = [
   {
@@ -226,6 +226,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
 
         .sidebar {
           width: 260px;
+          max-height: 100vh;
           height: 100vh;
           background: #0d1117;
           display: flex;
@@ -314,6 +315,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
 
         .nav {
           flex: 1; padding: 12px 10px;
+          min-height: 0vh;
           display: flex; flex-direction: column; gap: 2px;
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.05s;
