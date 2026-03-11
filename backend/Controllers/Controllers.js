@@ -1,7 +1,7 @@
 const Asset       = require("../Models/AssetModel");
 const Liability   = require("../Models/LiabilityModel");
 const Transaction = require("../Models/TransactionModel");
-const User        = require("../Models/UserModel");
+const User        = require("../Models/Usermodel");
 const bcrypt      = require("bcryptjs");
 const jwt         = require("jsonwebtoken");
 
