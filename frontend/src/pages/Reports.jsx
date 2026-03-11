@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector,
+  PieChart, Pie, Cell, Tooltip, Sector,
 } from "recharts";
 
 const ASSETS_API      = "https://maadala.onrender.com/api/assets";
@@ -66,9 +66,8 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
   const centerColor  = active ? active[colorKey]   : "#e2e8f0";
 
   return (
-    <div style={{ position: "relative", width: "100%", height: 280 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+    <div style={{ position: "relative", width: "100%", height: 280, minWidth: 0, display: "flex", justifyContent: "center" }}>
+      <PieChart width={280} height={280}>
           <Pie
             data={data}
             cx="50%"
@@ -94,7 +93,6 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
             ))}
           </Pie>
         </PieChart>
-      </ResponsiveContainer>
 
       {/* Center label — absolutely positioned over the hole */}
       <div style={{
@@ -724,6 +722,7 @@ const styles = {
     gridTemplateColumns: "1fr 1fr 300px",
     gap: 16, marginBottom: 28,
     alignItems: "start",
+    minWidth: 0,
   },
 
   chartCard: {
@@ -731,6 +730,8 @@ const styles = {
     background: "rgba(255,255,255,0.02)",
     border: "1px solid #1a1500",
     borderRadius: 16,
+    minWidth: 0,
+    overflow: "hidden",
   },
   chartCardHeader: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",

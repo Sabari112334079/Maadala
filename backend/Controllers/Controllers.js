@@ -1,6 +1,12 @@
 const Asset       = require("../Models/AssetModel");
 const Liability   = require("../Models/LiabilityModel");
 const Transaction = require("../Models/TransactionModel");
+const User        = require("../Models/UserModel");
+const bcrypt      = require("bcryptjs");
+const jwt         = require("jsonwebtoken");
+
+const JWT_SECRET  = process.env.JWT_SECRET  || "vaultfolio_secret_change_in_prod";
+const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  INTERNAL HELPER — log a transaction record
@@ -43,7 +49,6 @@ const _log = async ({
 //  ASSET CONTROLLERS
 // ═════════════════════════════════════════════════════════════════════════════
 
-// GET /api/assets
 const getAllAssets = async (req, res) => {
   try {
     const assets = await Asset.find().sort({ createdAt: -1 });
@@ -53,7 +58,6 @@ const getAllAssets = async (req, res) => {
   }
 };
 
-// GET /api/assets/:id
 const getAssetById = async (req, res) => {
   try {
     const asset = await Asset.findById(req.params.id);
@@ -64,7 +68,6 @@ const getAssetById = async (req, res) => {
   }
 };
 
-// POST /api/assets
 const createAsset = async (req, res) => {
   try {
     const { asset_name, institution, invested_value, invested_date, notes } = req.body;
@@ -105,7 +108,6 @@ const createAsset = async (req, res) => {
   }
 };
 
-// PUT /api/assets/:id
 const updateAsset = async (req, res) => {
   try {
     const { asset_name, institution, invested_value, current_value, invested_date, notes } = req.body;
@@ -147,14 +149,12 @@ const updateAsset = async (req, res) => {
   }
 };
 
-// PATCH /api/assets/:id/current-value
 const updateCurrentValue = async (req, res) => {
   try {
     const { current_value } = req.body;
 
-    if (current_value === undefined || current_value < 0) {
+    if (current_value === undefined || current_value < 0)
       return res.status(400).json({ message: "A valid current_value is required." });
-    }
 
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ message: "Asset not found" });
@@ -182,20 +182,17 @@ const updateCurrentValue = async (req, res) => {
   }
 };
 
-// POST /api/assets/:id/buy
 const buyAsset = async (req, res) => {
   try {
     const { amount, date } = req.body;
     const parsedAmount = Number(amount);
 
-    if (!parsedAmount || parsedAmount <= 0) {
+    if (!parsedAmount || parsedAmount <= 0)
       return res.status(400).json({ message: "A positive buy amount is required." });
-    }
 
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ message: "Asset not found" });
 
-    // Safety fallback for records created before current_value was tracked
     if (asset.current_value == null) asset.current_value = asset.invested_value;
 
     asset.invested_value += parsedAmount;
@@ -226,23 +223,20 @@ const buyAsset = async (req, res) => {
   }
 };
 
-// POST /api/assets/:id/sell
 const sellAsset = async (req, res) => {
   try {
     const { proceeds, date } = req.body;
 
-    if (!proceeds || proceeds <= 0) {
+    if (!proceeds || proceeds <= 0)
       return res.status(400).json({ message: "A positive sell proceeds amount is required." });
-    }
 
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ message: "Asset not found" });
 
-    if (proceeds > asset.current_value) {
+    if (proceeds > asset.current_value)
       return res.status(400).json({
         message: `Sell proceeds ($${proceeds}) exceed current value ($${asset.current_value}).`,
       });
-    }
 
     const sellRatio          = proceeds / asset.current_value;
     const costBasisReduction = asset.invested_value * sellRatio;
@@ -276,7 +270,6 @@ const sellAsset = async (req, res) => {
   }
 };
 
-// DELETE /api/assets/:id
 const deleteAsset = async (req, res) => {
   try {
     const asset = await Asset.findByIdAndDelete(req.params.id);
@@ -291,7 +284,6 @@ const deleteAsset = async (req, res) => {
 //  LIABILITY CONTROLLERS
 // ═════════════════════════════════════════════════════════════════════════════
 
-// GET /api/liabilities
 const getAllLiabilities = async (req, res) => {
   try {
     const liabilities = await Liability.find().sort({ createdAt: -1 });
@@ -301,7 +293,6 @@ const getAllLiabilities = async (req, res) => {
   }
 };
 
-// GET /api/liabilities/:id
 const getLiabilityById = async (req, res) => {
   try {
     const liability = await Liability.findById(req.params.id);
@@ -312,7 +303,6 @@ const getLiabilityById = async (req, res) => {
   }
 };
 
-// POST /api/liabilities
 const createLiability = async (req, res) => {
   try {
     const {
@@ -366,7 +356,6 @@ const createLiability = async (req, res) => {
   }
 };
 
-// PUT /api/liabilities/:id
 const updateLiability = async (req, res) => {
   try {
     const {
@@ -398,14 +387,12 @@ const updateLiability = async (req, res) => {
   }
 };
 
-// PATCH /api/liabilities/:id/current-balance
 const updateCurrentBalance = async (req, res) => {
   try {
     const { current_balance } = req.body;
 
-    if (current_balance === undefined || current_balance < 0) {
+    if (current_balance === undefined || current_balance < 0)
       return res.status(400).json({ message: "A valid current_balance is required." });
-    }
 
     const liability = await Liability.findById(req.params.id);
     if (!liability) return res.status(404).json({ message: "Liability not found" });
@@ -438,23 +425,20 @@ const updateCurrentBalance = async (req, res) => {
   }
 };
 
-// POST /api/liabilities/:id/pay
 const makePayment = async (req, res) => {
   try {
     const { amount, date, note } = req.body;
 
-    if (!amount || amount <= 0) {
+    if (!amount || amount <= 0)
       return res.status(400).json({ message: "A positive payment amount is required." });
-    }
 
     const liability = await Liability.findById(req.params.id);
     if (!liability) return res.status(404).json({ message: "Liability not found" });
 
-    if (amount > liability.current_balance) {
+    if (amount > liability.current_balance)
       return res.status(400).json({
         message: `Payment ($${amount}) exceeds current balance ($${liability.current_balance}).`,
       });
-    }
 
     liability.current_balance = Math.max(0, liability.current_balance - amount);
     liability.payment_history.push({
@@ -484,7 +468,6 @@ const makePayment = async (req, res) => {
   }
 };
 
-// DELETE /api/liabilities/:id
 const deleteLiability = async (req, res) => {
   try {
     const liability = await Liability.findByIdAndDelete(req.params.id);
@@ -499,7 +482,6 @@ const deleteLiability = async (req, res) => {
 //  TRANSACTION CONTROLLERS
 // ═════════════════════════════════════════════════════════════════════════════
 
-// GET /api/transactions/summary
 const getTransactionSummary = async (req, res) => {
   try {
     const [typeBreakdown, recentActivity, totalCount] = await Promise.all([
@@ -523,18 +505,11 @@ const getTransactionSummary = async (req, res) => {
   }
 };
 
-// GET /api/transactions
-// Query params: entity_type, type (comma-sep), entity_id, from, to, limit, page
 const getAllTransactions = async (req, res) => {
   try {
     const {
-      entity_type,
-      type,
-      entity_id,
-      from,
-      to,
-      limit = 20,
-      page  = 1,
+      entity_type, type, entity_id, from, to,
+      limit = 20, page = 1,
     } = req.query;
 
     const filter = {};
@@ -570,7 +545,6 @@ const getAllTransactions = async (req, res) => {
   }
 };
 
-// GET /api/transactions/:id
 const getTransactionById = async (req, res) => {
   try {
     const tx = await Transaction.findById(req.params.id);
@@ -581,7 +555,6 @@ const getTransactionById = async (req, res) => {
   }
 };
 
-// DELETE /api/transactions/:id
 const deleteTransaction = async (req, res) => {
   try {
     const tx = await Transaction.findByIdAndDelete(req.params.id);
@@ -593,32 +566,202 @@ const deleteTransaction = async (req, res) => {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-//  EXPORTS
+//  AUTH CONTROLLERS
 // ═════════════════════════════════════════════════════════════════════════════
 
+const signToken = (userId) =>
+  jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+
+// POST /api/auth/register
+const register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password)
+      return res.status(400).json({ message: "Name, email, and password are required." });
+
+    if (!/\S+@\S+\.\S+/.test(email))
+      return res.status(400).json({ message: "Please provide a valid email address." });
+
+    if (password.length < 8)
+      return res.status(400).json({ message: "Password must be at least 8 characters." });
+
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists)
+      return res.status(409).json({ message: "An account with this email already exists." });
+
+    const hashed = await bcrypt.hash(password, 12);
+    const user   = await new User({
+      name:     name.trim(),
+      email:    email.toLowerCase().trim(),
+      password: hashed,
+    }).save();
+
+    const token = signToken(user._id);
+
+    res.status(201).json({
+      message: "Account created successfully.",
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    if (error.code === 11000)
+      return res.status(409).json({ message: "An account with this email already exists." });
+    res.status(500).json({ message: "Registration failed.", error: error.message });
+  }
+};
+
+// POST /api/auth/login
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password are required." });
+
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
+    if (!user)
+      return res.status(401).json({ message: "Invalid email or password." });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(401).json({ message: "Invalid email or password." });
+
+    const token = signToken(user._id);
+
+    res.status(200).json({
+      message: "Logged in successfully.",
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed.", error: error.message });
+  }
+};
+
+// GET /api/auth/me — reads token directly from Authorization header (no middleware needed)
+const getMe = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer "))
+      return res.status(401).json({ message: "Not authorised. No token provided." });
+
+    const token   = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);  // throws if invalid or expired
+    const user    = await User.findById(decoded.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found." });
+
+    res.status(200).json({ user: { id: user._id, name: user.name, email: user.email } });
+  } catch {
+    res.status(401).json({ message: "Not authorised. Token is invalid or expired." });
+  }
+};
+
+
+
+// PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer "))
+      return res.status(401).json({ message: "Not authorised." });
+
+    const decoded = jwt.verify(authHeader.split(" ")[1], JWT_SECRET);
+    const { name, email } = req.body;
+
+    if (!name || !email)
+      return res.status(400).json({ message: "Name and email are required." });
+    if (!/\S+@\S+\.\S+/.test(email))
+      return res.status(400).json({ message: "Please provide a valid email address." });
+
+    const conflict = await User.findOne({ email: email.toLowerCase(), _id: { $ne: decoded.id } });
+    if (conflict)
+      return res.status(409).json({ message: "That email is already in use." });
+
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { name: name.trim(), email: email.toLowerCase().trim() },
+      { new: true, runValidators: true }
+    );
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    res.status(200).json({ message: "Profile updated.", user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError")
+      return res.status(401).json({ message: "Token invalid or expired." });
+    res.status(500).json({ message: "Failed to update profile.", error: err.message });
+  }
+};
+
+// PUT /api/auth/change-password
+const changePassword = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer "))
+      return res.status(401).json({ message: "Not authorised." });
+
+    const decoded = jwt.verify(authHeader.split(" ")[1], JWT_SECRET);
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ message: "Both current and new passwords are required." });
+    if (newPassword.length < 8)
+      return res.status(400).json({ message: "New password must be at least 8 characters." });
+
+    const user = await User.findById(decoded.id).select("+password");
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid)
+      return res.status(401).json({ message: "Current password is incorrect." });
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError")
+      return res.status(401).json({ message: "Token invalid or expired." });
+    res.status(500).json({ message: "Failed to change password.", error: err.message });
+  }
+};
+
+// DELETE /api/auth/account
+const deleteAccount = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer "))
+      return res.status(401).json({ message: "Not authorised." });
+
+    const decoded = jwt.verify(authHeader.split(" ")[1], JWT_SECRET);
+    const user    = await User.findByIdAndDelete(decoded.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    res.status(200).json({ message: "Account deleted successfully." });
+  } catch (err) {
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError")
+      return res.status(401).json({ message: "Token invalid or expired." });
+    res.status(500).json({ message: "Failed to delete account.", error: err.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  EXPORTS — single consolidated block
+// ═════════════════════════════════════════════════════════════════════════════
 module.exports = {
   // Assets
-  getAllAssets,
-  getAssetById,
-  createAsset,
-  updateAsset,
-  updateCurrentValue,
-  buyAsset,
-  sellAsset,
-  deleteAsset,
+  getAllAssets, getAssetById, createAsset, updateAsset,
+  updateCurrentValue, buyAsset, sellAsset, deleteAsset,
 
   // Liabilities
-  getAllLiabilities,
-  getLiabilityById,
-  createLiability,
-  updateLiability,
-  updateCurrentBalance,
-  makePayment,
-  deleteLiability,
+  getAllLiabilities, getLiabilityById, createLiability, updateLiability,
+  updateCurrentBalance, makePayment, deleteLiability,
 
   // Transactions
-  getAllTransactions,
-  getTransactionById,
-  getTransactionSummary,
-  deleteTransaction,
+  getAllTransactions, getTransactionById, getTransactionSummary, deleteTransaction,
+
+  // Auth
+  register, login, getMe,
+  updateProfile, changePassword, deleteAccount,
 };

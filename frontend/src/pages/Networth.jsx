@@ -658,6 +658,8 @@ const styles = {
     border: "1px solid #0f1e35",
     borderRadius: 18,
     marginBottom: 20,
+    minWidth: 0,
+    width: "100%",
   },
   chartHeader: {
     display: "flex", justifyContent: "space-between",
