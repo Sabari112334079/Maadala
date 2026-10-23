@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API = "http://localhost:5000/api/auth";
+const API = "https://maadala.onrender.com/api/auth";
 
 function getToken() {
   return localStorage.getItem("vaultfolio_token") || "";

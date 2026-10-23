@@ -11,8 +11,8 @@ import {
   Legend,
 } from "recharts";
 
-const ASSETS_API      = "http://localhost:5000/api/assets";
-const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+const ASSETS_API      = "https://maadala.onrender.com/api/assets";
+const LIABILITIES_API = "https://maadala.onrender.com/api/liabilities";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

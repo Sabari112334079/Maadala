@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("vaultfolio_token");
     if (!token) return;
-    fetch("http://localhost:5000/api/auth/me", {
+    fetch("https://maadala.onrender.com/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.ok ? r.json() : null)
