@@ -1,37 +1,47 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  PieChart, Pie, Cell, Tooltip, Sector,
-} from "recharts";
+import { PieChart, Pie, Cell, Sector } from "recharts";
 
-const ASSETS_API      = "https://maadala.onrender.com/api/assets";
-const LIABILITIES_API = "https://maadala.onrender.com/api/liabilities";
-const TRANSACTIONS_API = "https://maadala.onrender.com/api/transactions/summary";
+const ASSETS_API = "http://localhost:5000/api/assets";
+const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+const TRANSACTIONS_API = "http://localhost:5000/api/transactions/summary";
 
-// ─── Palette — 12 distinct slices, rich but not garish ───────────────────────
+// ─── Theme (shared with HomePage / Transactions) ──────────────────────────────
+const C = {
+  bg:         "#07080d",
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.10)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  surface:    "rgba(255,255,255,0.03)",
+  accent:     "#34d399",
+  accentDark: "#0d9488",
+  teal:       "#2dd4bf",
+  amber:      "#fbbf24",
+  negative:   "#f87171",
+};
+
+// ─── Palette — 12 distinct slices, green/teal-led ────────────────────────────
 const PALETTE = [
-  "#c084fc", "#60a5fa", "#34d399", "#fbbf24", "#f87171",
-  "#38bdf8", "#a78bfa", "#4ade80", "#fb923c", "#e879f9",
-  "#2dd4bf", "#f472b6",
+  "#34d399", "#2dd4bf", "#38bdf8", "#818cf8", "#fbbf24", "#f87171",
+  "#4ade80", "#22d3ee", "#a78bfa", "#fb923c", "#a3e635", "#f472b6",
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (v) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v || 0);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v || 0);
 
 const fmtFull = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v || 0);
 
 const fmtPct = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
 
-const gainColor = (v) => (v > 0 ? "#4ade80" : v < 0 ? "#f87171" : "#64748b");
+const gainColor = (v) => (v > 0 ? C.accent : v < 0 ? C.negative : C.muted);
 
 // ─── Custom Active Shape (inflates hovered slice) ─────────────────────────────
 function ActiveShape(props) {
-  const {
-    cx, cy, innerRadius, outerRadius, startAngle, endAngle,
-    fill, payload, percent,
-  } = props;
-
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
   return (
     <g>
       <Sector
@@ -56,45 +66,45 @@ function ActiveShape(props) {
   );
 }
 
-// ─── Donut chart with SVG center label ───────────────────────────────────────
+// ─── Donut chart with center label ───────────────────────────────────────────
 function DonutChart({ data, label, sublabel, colorKey = "color" }) {
   const [activeIdx, setActiveIdx] = useState(null);
 
   const active = activeIdx !== null ? data[activeIdx] : null;
-  const centerLabel  = active ? active.name       : label;
-  const centerSub    = active ? fmt(active.value)  : sublabel;
-  const centerColor  = active ? active[colorKey]   : "#e2e8f0";
+  const centerLabel = active ? active.name      : label;
+  const centerSub   = active ? fmt(active.value) : sublabel;
+  const centerColor = active ? active[colorKey]  : C.text;
 
   return (
     <div style={{ position: "relative", width: "100%", height: 280, minWidth: 0, display: "flex", justifyContent: "center" }}>
       <PieChart width={280} height={280}>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={88}
-            outerRadius={118}
-            dataKey="value"
-            paddingAngle={2}
-            activeIndex={activeIdx}
-            activeShape={ActiveShape}
-            onMouseEnter={(_, idx) => setActiveIdx(idx)}
-            onMouseLeave={() => setActiveIdx(null)}
-            animationBegin={0}
-            animationDuration={900}
-          >
-            {data.map((entry, i) => (
-              <Cell
-                key={i}
-                fill={entry[colorKey]}
-                opacity={activeIdx === null || activeIdx === i ? 1 : 0.35}
-                style={{ cursor: "pointer", outline: "none" }}
-              />
-            ))}
-          </Pie>
-        </PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={88}
+          outerRadius={118}
+          dataKey="value"
+          paddingAngle={2}
+          stroke="none"
+          activeIndex={activeIdx}
+          activeShape={ActiveShape}
+          onMouseEnter={(_, idx) => setActiveIdx(idx)}
+          onMouseLeave={() => setActiveIdx(null)}
+          animationBegin={0}
+          animationDuration={900}
+        >
+          {data.map((entry, i) => (
+            <Cell
+              key={i}
+              fill={entry[colorKey]}
+              opacity={activeIdx === null || activeIdx === i ? 1 : 0.35}
+              style={{ cursor: "pointer", outline: "none" }}
+            />
+          ))}
+        </Pie>
+      </PieChart>
 
-      {/* Center label — absolutely positioned over the hole */}
       <div style={{
         position: "absolute",
         top: "50%", left: "50%",
@@ -104,9 +114,9 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
         width: 160,
       }}>
         <div style={{
-          fontSize: active ? 11 : 10,
+          fontSize: 11,
           letterSpacing: "0.12em",
-          color: active ? centerColor : "#475569",
+          color: active ? centerColor : C.muted,
           marginBottom: 4,
           transition: "color 0.2s",
           whiteSpace: "nowrap",
@@ -119,7 +129,7 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
         <div style={{
           fontFamily: "'DM Serif Display', serif",
           fontSize: active ? 20 : 17,
-          color: active ? centerColor : "#f1f5f9",
+          color: active ? centerColor : C.text,
           letterSpacing: "-0.5px",
           lineHeight: 1,
           transition: "all 0.2s",
@@ -127,12 +137,7 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
           {centerSub}
         </div>
         {active && (
-          <div style={{
-            fontSize: 10,
-            color: "#475569",
-            marginTop: 5,
-            fontFamily: "'DM Mono', monospace",
-          }}>
+          <div style={{ fontSize: 10.5, color: C.muted, marginTop: 5, fontFamily: "'DM Mono', monospace" }}>
             {(active.pct || 0).toFixed(1)}% of total
           </div>
         )}
@@ -141,7 +146,7 @@ function DonutChart({ data, label, sublabel, colorKey = "color" }) {
   );
 }
 
-// ─── Shared legend strip ──────────────────────────────────────────────────────
+// ─── Legend ───────────────────────────────────────────────────────────────────
 function Legend({ items }) {
   return (
     <div style={lgStyles.wrap}>
@@ -165,19 +170,19 @@ const lgStyles = {
   },
   row: { display: "flex", alignItems: "center", gap: 8 },
   dot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
-  name: { flex: 1, fontSize: 12, color: "#64748b", letterSpacing: "0.02em" },
-  pct: { fontSize: 11, color: "#475569", fontFamily: "'DM Mono', monospace", minWidth: 36, textAlign: "right" },
+  name: { flex: 1, fontSize: 12, color: C.body, letterSpacing: "0.02em" },
+  pct: { fontSize: 11, color: C.muted, fontFamily: "'DM Mono', monospace", minWidth: 36, textAlign: "right" },
 };
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KPICard({ label, value, sub, accent, icon }) {
   return (
-    <div style={{ ...kpiStyles.card, borderColor: `${accent}22` }}>
-      <div style={{ ...kpiStyles.iconWrap, background: `${accent}14`, color: accent }}>
+    <div style={{ ...kpiStyles.card, borderColor: `${accent}40` }}>
+      <div style={{ ...kpiStyles.iconWrap, background: `${accent}1f`, color: accent, border: `1px solid ${accent}40` }}>
         {icon}
       </div>
       <div>
-        <div style={{ ...kpiStyles.label, color: `${accent}99` }}>{label}</div>
+        <div style={kpiStyles.label}>{label}</div>
         <div style={{ ...kpiStyles.value, color: accent }}>{value}</div>
         {sub && <div style={kpiStyles.sub}>{sub}</div>}
       </div>
@@ -189,7 +194,7 @@ const kpiStyles = {
   card: {
     display: "flex", alignItems: "center", gap: 14,
     padding: "16px 20px",
-    background: "rgba(255,255,255,0.02)",
+    background: C.surface,
     border: "1px solid",
     borderRadius: 14, flex: 1, minWidth: 150,
   },
@@ -198,24 +203,28 @@ const kpiStyles = {
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: 18,
   },
-  label: { fontSize: 10, letterSpacing: "0.15em", marginBottom: 3 },
+  label: { fontSize: 10.5, letterSpacing: "0.14em", marginBottom: 3, color: C.muted },
   value: {
     fontFamily: "'DM Serif Display', serif",
     fontSize: 22, fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1,
   },
-  sub: { fontSize: 11, color: "#475569", marginTop: 3 },
+  sub: { fontSize: 11, color: C.muted, marginTop: 4 },
 };
 
 // ─── Gain / Loss table ────────────────────────────────────────────────────────
 function GainLossTable({ assets, sortKey, sortDir, onSort }) {
   const sorted = [...assets].sort((a, b) => {
-    let av = a[sortKey], bv = b[sortKey];
+    const av = a[sortKey], bv = b[sortKey];
+    if (typeof av === "string" || typeof bv === "string") {
+      const cmp = String(av ?? "").localeCompare(String(bv ?? ""));
+      return sortDir === "asc" ? cmp : -cmp;
+    }
     return sortDir === "asc" ? av - bv : bv - av;
   });
 
   const SortIcon = ({ col }) => {
-    if (sortKey !== col) return <span style={{ color: "#1e293b", fontSize: 10 }}>⇅</span>;
-    return <span style={{ color: "#e2b55a", fontSize: 10 }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
+    if (sortKey !== col) return <span style={{ color: C.faint, fontSize: 10 }}>⇅</span>;
+    return <span style={{ color: C.accent, fontSize: 10 }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
   };
 
   const Th = ({ col, label, align = "right" }) => (
@@ -248,29 +257,22 @@ function GainLossTable({ assets, sortKey, sortDir, onSort }) {
               <tr
                 key={asset._id || i}
                 style={tblStyles.row}
-                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(52,211,153,0.05)"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
               >
                 <td style={{ ...tblStyles.td, textAlign: "left" }}>
                   <div style={tblStyles.assetCell}>
-                    <div
-                      style={{
-                        ...tblStyles.dot,
-                        background: PALETTE[i % PALETTE.length],
-                      }}
-                    />
-                    <div>
-                      <div style={tblStyles.assetName}>{asset.asset_name}</div>
-                    </div>
+                    <div style={{ ...tblStyles.dot, background: asset.color }} />
+                    <div style={tblStyles.assetName}>{asset.asset_name}</div>
                   </div>
                 </td>
-                <td style={{ ...tblStyles.td, textAlign: "left", color: "#475569", fontSize: 12 }}>
+                <td style={{ ...tblStyles.td, textAlign: "left", color: C.muted, fontSize: 12 }}>
                   {asset.institution}
                 </td>
-                <td style={{ ...tblStyles.td, color: "#94a3b8" }}>
+                <td style={{ ...tblStyles.td, color: C.body }}>
                   {fmtFull(asset.invested_value)}
                 </td>
-                <td style={{ ...tblStyles.td, color: "#e2e8f0", fontWeight: 500 }}>
+                <td style={{ ...tblStyles.td, color: C.text, fontWeight: 500 }}>
                   {fmtFull(asset.current_value || asset.invested_value)}
                 </td>
                 <td style={{ ...tblStyles.td, color: gainColor(gain), fontWeight: 500 }}>
@@ -280,8 +282,8 @@ function GainLossTable({ assets, sortKey, sortDir, onSort }) {
                   <span style={{
                     ...tblStyles.pctBadge,
                     color: gainColor(gainPct),
-                    background: `${gainColor(gainPct)}14`,
-                    border: `1px solid ${gainColor(gainPct)}33`,
+                    background: `${gainColor(gainPct)}1a`,
+                    border: `1px solid ${gainColor(gainPct)}4d`,
                   }}>
                     {fmtPct(gainPct)}
                   </span>
@@ -298,8 +300,8 @@ function GainLossTable({ assets, sortKey, sortDir, onSort }) {
 const tblStyles = {
   wrap: {
     overflowX: "auto",
-    background: "rgba(255,255,255,0.015)",
-    border: "1px solid #0f172a",
+    background: "rgba(255,255,255,0.02)",
+    border: `1px solid ${C.border}`,
     borderRadius: 14,
   },
   table: {
@@ -308,27 +310,27 @@ const tblStyles = {
   },
   th: {
     padding: "10px 16px",
-    fontSize: 10, letterSpacing: "0.14em", color: "#334155",
-    background: "rgba(0,0,0,0.25)",
-    borderBottom: "1px solid #0f172a",
+    fontSize: 10.5, letterSpacing: "0.14em", color: C.muted,
+    background: "rgba(0,0,0,0.35)",
+    borderBottom: `1px solid ${C.borderSoft}`,
     fontWeight: 400, whiteSpace: "nowrap",
     userSelect: "none",
   },
   row: {
-    borderBottom: "1px solid #0a0f1a",
+    borderBottom: `1px solid ${C.borderSoft}`,
     transition: "background 0.12s",
     cursor: "default",
   },
   td: {
     padding: "13px 16px",
     fontSize: 13, textAlign: "right",
-    color: "#64748b",
+    color: C.body,
     fontFamily: "'DM Mono', monospace",
     whiteSpace: "nowrap",
   },
   assetCell: { display: "flex", alignItems: "center", gap: 10 },
   dot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
-  assetName: { fontSize: 13, color: "#cbd5e1", fontWeight: 500 },
+  assetName: { fontSize: 13, color: C.text, fontWeight: 500 },
   pctBadge: {
     display: "inline-block",
     padding: "3px 8px", borderRadius: 20,
@@ -340,12 +342,12 @@ const tblStyles = {
 function SectionHeader({ eyebrow, title }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#3d2e05", marginBottom: 4 }}>
+      <div style={{ fontSize: 10.5, letterSpacing: "0.2em", color: C.accent, marginBottom: 4 }}>
         {eyebrow}
       </div>
       <div style={{
         fontFamily: "'DM Serif Display', serif",
-        fontSize: 20, color: "#fef3c7", letterSpacing: "-0.3px",
+        fontSize: 20, color: C.text, letterSpacing: "-0.3px",
       }}>
         {title}
       </div>
@@ -439,8 +441,8 @@ export default function Reports() {
 
   if (loading) return (
     <div style={{ ...styles.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={styles.grain} />
-      <p style={{ fontFamily: "'DM Mono', monospace", color: "#3d2e05", fontSize: 13, zIndex: 1 }}>
+      <div style={styles.glow} />
+      <p style={{ fontFamily: "'DM Mono', monospace", color: C.muted, fontSize: 13, zIndex: 1 }}>
         Generating report…
       </p>
     </div>
@@ -448,14 +450,14 @@ export default function Reports() {
 
   if (error) return (
     <div style={{ ...styles.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={styles.grain} />
-      <p style={{ fontFamily: "'DM Mono', monospace", color: "#f87171", fontSize: 13, zIndex: 1 }}>{error}</p>
+      <div style={styles.glow} />
+      <p style={{ fontFamily: "'DM Mono', monospace", color: C.negative, fontSize: 13, zIndex: 1 }}>{error}</p>
     </div>
   );
 
   return (
     <div style={styles.page}>
-      <div style={styles.grain} />
+      <div style={styles.glow} />
       <div style={styles.container}>
 
         {/* ── Page Header ── */}
@@ -476,28 +478,28 @@ export default function Reports() {
             label="TOTAL INVESTED"
             value={fmt(totalInvested)}
             sub={`Across ${enriched.length} positions`}
-            accent="#e2b55a"
+            accent={C.accent}
             icon="◈"
           />
           <KPICard
             label="CURRENT VALUE"
             value={fmt(totalCurrent)}
             sub={`${totalGain >= 0 ? "+" : ""}${fmt(totalGain)} all time`}
-            accent="#c084fc"
+            accent="#4ade80"
             icon="◉"
           />
           <KPICard
             label="TOTAL RETURN"
             value={fmtPct(totalGainPct)}
             sub={totalGain >= 0 ? "Portfolio is up" : "Portfolio is down"}
-            accent={gainColor(totalGain)}
+            accent={totalGain === 0 ? C.muted : gainColor(totalGain)}
             icon={totalGain >= 0 ? "↑" : "↓"}
           />
           <KPICard
             label="NET WORTH"
             value={fmt(netWorth)}
             sub={`After ${fmt(totalLiab)} liabilities`}
-            accent="#2dd4bf"
+            accent={C.teal}
             icon="⬡"
           />
         </div>
@@ -507,8 +509,7 @@ export default function Reports() {
         {/* ── Donut Charts ── */}
         <SectionHeader eyebrow="ALLOCATION" title="Asset Distribution" />
 
-        <div style={styles.chartsRow}>
-          {/* Current Value Donut */}
+        <div className="reports-charts" style={styles.chartsRow}>
           <div style={styles.chartCard}>
             <div style={styles.chartCardHeader}>
               <div style={styles.chartCardTag}>CURRENT VALUE</div>
@@ -518,17 +519,12 @@ export default function Reports() {
               <div style={styles.emptyChart}>No assets yet</div>
             ) : (
               <>
-                <DonutChart
-                  data={currentPieData}
-                  label="CURRENT VALUE"
-                  sublabel={fmt(totalCurrent)}
-                />
+                <DonutChart data={currentPieData} label="CURRENT VALUE" sublabel={fmt(totalCurrent)} />
                 <Legend items={currentPieData} />
               </>
             )}
           </div>
 
-          {/* Invested Value Donut */}
           <div style={styles.chartCard}>
             <div style={styles.chartCardHeader}>
               <div style={styles.chartCardTag}>INVESTED VALUE</div>
@@ -538,11 +534,7 @@ export default function Reports() {
               <div style={styles.emptyChart}>No assets yet</div>
             ) : (
               <>
-                <DonutChart
-                  data={investedPieData}
-                  label="INVESTED VALUE"
-                  sublabel={fmt(totalInvested)}
-                />
+                <DonutChart data={investedPieData} label="INVESTED VALUE" sublabel={fmt(totalInvested)} />
                 <Legend items={investedPieData} />
               </>
             )}
@@ -550,13 +542,13 @@ export default function Reports() {
 
           {/* Highlights panel */}
           <div style={styles.highlightsPanel}>
-            <div style={styles.chartCardTag} >HIGHLIGHTS</div>
+            <div style={styles.chartCardTag}>HIGHLIGHTS</div>
 
             {winner && (
               <div style={styles.highlightCard}>
                 <div style={styles.hlLabel}>BEST PERFORMER</div>
                 <div style={styles.hlName}>{winner.asset_name}</div>
-                <div style={{ ...styles.hlValue, color: "#4ade80" }}>
+                <div style={{ ...styles.hlValue, color: C.accent }}>
                   {fmtPct(winner.gainPct)}
                 </div>
                 <div style={styles.hlSub}>{winner.institution}</div>
@@ -564,10 +556,14 @@ export default function Reports() {
             )}
 
             {loser && loser._id !== winner?._id && (
-              <div style={{ ...styles.highlightCard, borderColor: "rgba(248,113,113,0.15)" }}>
+              <div style={{
+                ...styles.highlightCard,
+                background: "rgba(248,113,113,0.06)",
+                borderColor: "rgba(248,113,113,0.3)",
+              }}>
                 <div style={styles.hlLabel}>NEEDS ATTENTION</div>
                 <div style={styles.hlName}>{loser.asset_name}</div>
-                <div style={{ ...styles.hlValue, color: "#f87171" }}>
+                <div style={{ ...styles.hlValue, color: C.negative }}>
                   {fmtPct(loser.gainPct)}
                 </div>
                 <div style={styles.hlSub}>{loser.institution}</div>
@@ -579,19 +575,19 @@ export default function Reports() {
                 <div style={styles.hlLabel}>ACTIVITY SUMMARY</div>
                 <div style={styles.txRow}>
                   <span style={styles.txLabel}>Total Transactions</span>
-                  <span style={styles.txVal}>{txSummary.totalCount}</span>
+                  <span style={{ ...styles.txVal, color: C.text }}>{txSummary.totalCount}</span>
                 </div>
                 <div style={styles.txRow}>
                   <span style={styles.txLabel}>Total Bought</span>
-                  <span style={{ ...styles.txVal, color: "#4ade80" }}>{fmt(totalBuys)}</span>
+                  <span style={{ ...styles.txVal, color: C.accent }}>{fmt(totalBuys)}</span>
                 </div>
                 <div style={styles.txRow}>
                   <span style={styles.txLabel}>Total Sold</span>
-                  <span style={{ ...styles.txVal, color: "#f87171" }}>{fmt(totalSells)}</span>
+                  <span style={{ ...styles.txVal, color: C.negative }}>{fmt(totalSells)}</span>
                 </div>
                 <div style={styles.txRow}>
                   <span style={styles.txLabel}>Debt Payments</span>
-                  <span style={{ ...styles.txVal, color: "#2dd4bf" }}>{fmt(totalPays)}</span>
+                  <span style={{ ...styles.txVal, color: C.teal }}>{fmt(totalPays)}</span>
                 </div>
               </div>
             )}
@@ -637,12 +633,12 @@ export default function Reports() {
                       <div style={styles.liabBal}>{fmt(l.current_balance)}</div>
                     </div>
                     <div style={styles.liabBarWrap}>
-                      <div style={{ ...styles.liabBarFill, width: `${pct}%` }} />
+                      <div style={{ ...styles.liabBarFill, width: `${Math.min(Math.max(pct, 0), 100)}%` }} />
                     </div>
                     <div style={styles.liabMeta}>
-                      <span style={{ color: "#4ade80" }}>{pct.toFixed(1)}% paid off</span>
+                      <span style={{ color: C.accent }}>{pct.toFixed(1)}% paid off</span>
                       {l.interest_rate > 0 && (
-                        <span style={{ color: "#fb923c" }}>{l.interest_rate}% p.a.</span>
+                        <span style={{ color: C.amber }}>{l.interest_rate}% p.a.</span>
                       )}
                     </div>
                   </div>
@@ -655,15 +651,19 @@ export default function Reports() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 99px; }
+        th:focus-visible { outline: 2px solid ${C.accent}; outline-offset: -2px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #07080d; }
+        ::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 99px; }
+        @media (max-width: 900px) {
+          .reports-charts { grid-template-columns: 1fr !important; }
+        }
       `}</style>
     </div>
   );
@@ -673,14 +673,18 @@ export default function Reports() {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(150deg, #070508 0%, #0c0a02 40%, #080709 100%)",
+    background: C.bg,
     fontFamily: "'DM Mono', monospace",
-    color: "#e2e8f0",
+    color: C.text,
     position: "relative",
+    overflowX: "hidden",
   },
-  grain: {
-    position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E")`,
+  glow: {
+    position: "fixed", top: "-10%", left: "50%",
+    transform: "translateX(-50%)",
+    width: 800, height: 500, borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 65%)",
+    pointerEvents: "none", zIndex: 0,
   },
   container: {
     position: "relative", zIndex: 1,
@@ -693,27 +697,27 @@ const styles = {
     display: "flex", justifyContent: "space-between",
     alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 32,
   },
-  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: "#3d2e05", marginBottom: 6 },
+  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: C.accent, marginBottom: 6 },
   pageTitle: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 52, fontWeight: 400, color: "#fef3c7",
+    fontSize: 52, fontWeight: 400, color: C.text,
     lineHeight: 1, letterSpacing: "-1px",
   },
   headerMeta: {
     display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4,
     padding: "10px 16px",
-    background: "rgba(226,181,90,0.05)",
-    border: "1px solid rgba(226,181,90,0.12)",
+    background: "rgba(52,211,153,0.08)",
+    border: "1px solid rgba(52,211,153,0.3)",
     borderRadius: 10,
   },
-  headerMetaLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#7c5c0a" },
-  headerMetaValue: { fontSize: 14, color: "#e2b55a", fontWeight: 500 },
+  headerMetaLabel: { fontSize: 10.5, letterSpacing: "0.14em", color: C.muted },
+  headerMetaValue: { fontSize: 14, color: C.accent, fontWeight: 500 },
 
   kpiRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 },
 
   divider: {
     height: 1,
-    background: "linear-gradient(90deg, transparent, #1a1500 30%, #1a1500 70%, transparent)",
+    background: `linear-gradient(90deg, transparent, ${C.border} 30%, ${C.border} 70%, transparent)`,
     marginBottom: 28,
   },
 
@@ -727,8 +731,8 @@ const styles = {
 
   chartCard: {
     padding: "22px 20px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1a1500",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 16,
     minWidth: 0,
     overflow: "hidden",
@@ -738,52 +742,52 @@ const styles = {
     marginBottom: 4,
   },
   chartCardTag: {
-    fontSize: 10, letterSpacing: "0.18em", color: "#7c5c0a", marginBottom: 16,
+    fontSize: 10.5, letterSpacing: "0.16em", color: C.muted, marginBottom: 16,
   },
   chartCardTotal: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 18, color: "#e2b55a",
+    fontSize: 18, color: C.accent,
   },
   emptyChart: {
     height: 200, display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 13, color: "#1a1500",
+    fontSize: 13, color: C.muted,
   },
 
   highlightsPanel: {
     display: "flex", flexDirection: "column", gap: 12,
     padding: "22px 20px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1a1500",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 16,
   },
   highlightCard: {
     padding: "14px 16px",
-    background: "rgba(74,222,128,0.04)",
-    border: "1px solid rgba(74,222,128,0.12)",
+    background: "rgba(52,211,153,0.06)",
+    border: "1px solid rgba(52,211,153,0.3)",
     borderRadius: 10,
   },
-  hlLabel: { fontSize: 9, letterSpacing: "0.18em", color: "#334155", marginBottom: 5 },
-  hlName: { fontSize: 14, color: "#f1f5f9", fontWeight: 500, marginBottom: 3 },
+  hlLabel: { fontSize: 10, letterSpacing: "0.16em", color: C.muted, marginBottom: 5 },
+  hlName: { fontSize: 14, color: C.text, fontWeight: 500, marginBottom: 3 },
   hlValue: { fontFamily: "'DM Serif Display', serif", fontSize: 22, letterSpacing: "-0.5px" },
-  hlSub: { fontSize: 11, color: "#475569", marginTop: 2 },
+  hlSub: { fontSize: 11, color: C.muted, marginTop: 2 },
   txSummaryCard: {
     padding: "14px 16px",
     background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1a1500",
+    border: `1px solid ${C.border}`,
     borderRadius: 10,
     display: "flex", flexDirection: "column", gap: 8,
   },
   txRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  txLabel: { fontSize: 11, color: "#475569" },
-  txVal: { fontSize: 12, fontWeight: 500, color: "#64748b", fontFamily: "'DM Mono', monospace" },
+  txLabel: { fontSize: 11.5, color: C.body },
+  txVal: { fontSize: 12, fontWeight: 500, color: C.body, fontFamily: "'DM Mono', monospace" },
 
   centerState: {
     display: "flex", flexDirection: "column", alignItems: "center",
     justifyContent: "center", paddingTop: 60, gap: 10, textAlign: "center",
   },
-  emptyIcon: { fontSize: 44, color: "#1a1500", lineHeight: 1, marginBottom: 8 },
-  stateTitle: { fontSize: 18, fontFamily: "'DM Serif Display', serif", color: "#3d2e05" },
-  stateText: { fontSize: 13, color: "#3d2e05", maxWidth: 280, lineHeight: 1.6 },
+  emptyIcon: { fontSize: 44, color: C.accent, opacity: 0.5, lineHeight: 1, marginBottom: 8 },
+  stateTitle: { fontSize: 18, fontFamily: "'DM Serif Display', serif", color: C.text },
+  stateText: { fontSize: 13, color: C.muted, maxWidth: 280, lineHeight: 1.6 },
 
   liabGrid: {
     display: "grid",
@@ -792,27 +796,27 @@ const styles = {
   },
   liabCard: {
     padding: "16px 18px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1a1500",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 12,
     display: "flex", flexDirection: "column", gap: 10,
   },
   liabTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  liabName: { fontSize: 13, color: "#fef3c7", fontWeight: 500, marginBottom: 2 },
-  liabSub: { fontSize: 11, color: "#3d2e05" },
+  liabName: { fontSize: 13, color: C.text, fontWeight: 500, marginBottom: 2 },
+  liabSub: { fontSize: 11, color: C.muted },
   liabBal: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 16, color: "#f87171",
+    fontSize: 16, color: C.negative,
   },
-  liabBarWrap: { height: 3, background: "#1a1500", borderRadius: 99, overflow: "hidden" },
+  liabBarWrap: { height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" },
   liabBarFill: {
     height: "100%",
-    background: "linear-gradient(90deg, #16a34a, #4ade80)",
+    background: `linear-gradient(90deg, ${C.accentDark}, ${C.accent})`,
     borderRadius: 99,
     transition: "width 0.6s ease",
   },
   liabMeta: {
     display: "flex", justifyContent: "space-between",
-    fontSize: 10, letterSpacing: "0.06em",
+    fontSize: 10.5, letterSpacing: "0.06em",
   },
 };

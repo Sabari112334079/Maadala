@@ -11,13 +11,31 @@ import {
   Legend,
 } from "recharts";
 
-const ASSETS_API      = "https://maadala.onrender.com/api/assets";
-const LIABILITIES_API = "https://maadala.onrender.com/api/liabilities";
+const ASSETS_API      = "http://localhost:5000/api/assets";
+const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+
+// ─── Theme (shared with the rest of the app) ──────────────────────────────────
+const C = {
+  bg:         "#07080d",
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.12)",
+  borderSoft: "rgba(255,255,255,0.07)",
+  surface:    "rgba(255,255,255,0.035)",
+  accent:     "#34d399",   // net worth / positive
+  accentDark: "#0d9488",
+  assets:     "#a5b4fc",   // assets series
+  assetsDeep: "#818cf8",
+  negative:   "#f87171",   // liabilities / negative
+  amber:      "#fbbf24",   // debt ratio
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (val) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(val || 0);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val || 0);
 
 const fmtFull = (val) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val || 0);
@@ -28,7 +46,7 @@ const fmtDate = (d) =>
 const fmtDateLong = (d) =>
   new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
-const gainColor = (v) => (v > 0 ? "#2dd4bf" : v < 0 ? "#f87171" : "#64748b");
+const gainColor = (v) => (v > 0 ? C.accent : v < 0 ? C.negative : C.muted);
 const gainPrefix = (v) => (v > 0 ? "+" : "");
 
 /**
@@ -100,7 +118,7 @@ function buildTimeline(assets, liabilities) {
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
 
   const data = payload[0]?.payload;
@@ -112,19 +130,19 @@ function CustomTooltip({ active, payload, label }) {
     <div style={tooltipStyles.wrap}>
       <div style={tooltipStyles.date}>{fmtDateLong(data.date)}</div>
       <div style={tooltipStyles.row}>
-        <span style={{ ...tooltipStyles.dot, background: "#6366f1" }} />
+        <span style={{ ...tooltipStyles.dot, background: C.assets }} />
         <span style={tooltipStyles.label}>Assets</span>
         <span style={tooltipStyles.value}>{fmtFull(data.totalAssets)}</span>
       </div>
       <div style={tooltipStyles.row}>
-        <span style={{ ...tooltipStyles.dot, background: "#f87171" }} />
+        <span style={{ ...tooltipStyles.dot, background: C.negative }} />
         <span style={tooltipStyles.label}>Liabilities</span>
         <span style={tooltipStyles.value}>{fmtFull(data.totalLiabilities)}</span>
       </div>
       <div style={tooltipStyles.divider} />
       <div style={tooltipStyles.row}>
         <span style={{ ...tooltipStyles.dot, background: gainColor(nw) }} />
-        <span style={{ ...tooltipStyles.label, color: "#e2e8f0" }}>Net Worth</span>
+        <span style={{ ...tooltipStyles.label, color: C.text }}>Net Worth</span>
         <span style={{ ...tooltipStyles.value, color: gainColor(nw), fontWeight: 600 }}>
           {gainPrefix(nw)}{fmtFull(nw)}
         </span>
@@ -135,20 +153,20 @@ function CustomTooltip({ active, payload, label }) {
 
 const tooltipStyles = {
   wrap: {
-    background: "rgba(10,15,30,0.97)",
-    border: "1px solid #1e293b",
+    background: "rgba(8,12,18,0.96)",
+    border: `1px solid ${C.border}`,
     borderRadius: 12,
     padding: "14px 18px",
     fontFamily: "'DM Mono', monospace",
     boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
-    minWidth: 220,
+    minWidth: 230,
   },
-  date: { fontSize: 11, letterSpacing: "0.1em", color: "#475569", marginBottom: 10 },
+  date: { fontSize: 11, letterSpacing: "0.1em", color: C.muted, marginBottom: 10 },
   row: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 },
   dot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
-  label: { fontSize: 12, color: "#64748b", flex: 1 },
-  value: { fontSize: 13, color: "#cbd5e1" },
-  divider: { height: 1, background: "#1e293b", margin: "8px 0" },
+  label: { fontSize: 12, color: C.body, flex: 1 },
+  value: { fontSize: 13, color: C.text },
+  divider: { height: 1, background: C.border, margin: "8px 0" },
 };
 
 // ─── Time Range Selector ──────────────────────────────────────────────────────
@@ -166,12 +184,12 @@ function filterByRange(data, range) {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, color, dimColor }) {
+function StatCard({ label, value, sub, color }) {
   return (
-    <div style={{ ...cardStyles.card, borderColor: `${color}22` }}>
+    <div style={{ ...cardStyles.card, borderColor: `${color}40` }}>
       <div style={{ ...cardStyles.dot, background: color }} />
-      <span style={{ ...cardStyles.label, color: dimColor }}>{label}</span>
-      <span style={{ ...cardStyles.value, color }}>{value}</span>
+      <span style={{ ...cardStyles.label, color }}>{label}</span>
+      <span style={{ ...cardStyles.value, color: C.text }}>{value}</span>
       {sub && <span style={cardStyles.sub}>{sub}</span>}
     </div>
   );
@@ -179,21 +197,21 @@ function StatCard({ label, value, sub, color, dimColor }) {
 
 const cardStyles = {
   card: {
-    display: "flex", flexDirection: "column", gap: 4,
+    display: "flex", flexDirection: "column", gap: 5,
     padding: "16px 20px",
-    background: "rgba(255,255,255,0.02)",
+    background: C.surface,
     border: "1px solid",
     borderRadius: 14,
     position: "relative",
-    flex: 1, minWidth: 140,
+    flex: 1, minWidth: 150,
   },
   dot: {
     position: "absolute", top: 16, right: 16,
     width: 6, height: 6, borderRadius: "50%",
   },
-  label: { fontSize: 10, letterSpacing: "0.18em" },
-  value: { fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px", fontFamily: "'DM Serif Display', serif" },
-  sub: { fontSize: 11, color: "#475569", marginTop: 2 },
+  label: { fontFamily: "'DM Mono', monospace", fontSize: 10.5, letterSpacing: "0.16em" },
+  value: { fontSize: 24, fontWeight: 400, letterSpacing: "-0.5px", fontFamily: "'DM Serif Display', serif" },
+  sub: { fontSize: 12, color: C.muted, marginTop: 2 },
 };
 
 // ─── Asset Breakdown Bar ──────────────────────────────────────────────────────
@@ -210,21 +228,21 @@ function BreakdownBar({ assets, liabilities }) {
   return (
     <div style={bbStyles.wrap}>
       <div style={bbStyles.header}>
-        <span style={bbStyles.title}>Portfolio Composition</span>
+        <span style={bbStyles.title}>PORTFOLIO COMPOSITION</span>
       </div>
       <div style={bbStyles.bar}>
-        <div style={{ ...bbStyles.segment, width: `${assetPct}%`, background: "linear-gradient(90deg,#4338ca,#6366f1)" }} />
-        <div style={{ ...bbStyles.segment, width: `${liabPct}%`, background: "linear-gradient(90deg,#dc2626,#f87171)" }} />
+        <div style={{ ...bbStyles.segment, width: `${assetPct}%`, background: `linear-gradient(90deg, ${C.assetsDeep}, ${C.assets})` }} />
+        <div style={{ ...bbStyles.segment, width: `${liabPct}%`, background: "linear-gradient(90deg, #dc2626, #f87171)" }} />
       </div>
       <div style={bbStyles.legend}>
         <div style={bbStyles.legendItem}>
-          <span style={{ ...bbStyles.legendDot, background: "#6366f1" }} />
+          <span style={{ ...bbStyles.legendDot, background: C.assets }} />
           <span style={bbStyles.legendLabel}>Assets</span>
           <span style={bbStyles.legendVal}>{fmt(totalAssets)}</span>
           <span style={bbStyles.legendPct}>{assetPct.toFixed(1)}%</span>
         </div>
         <div style={bbStyles.legendItem}>
-          <span style={{ ...bbStyles.legendDot, background: "#f87171" }} />
+          <span style={{ ...bbStyles.legendDot, background: C.negative }} />
           <span style={bbStyles.legendLabel}>Liabilities</span>
           <span style={bbStyles.legendVal}>{fmt(totalLiab)}</span>
           <span style={bbStyles.legendPct}>{liabPct.toFixed(1)}%</span>
@@ -237,23 +255,23 @@ function BreakdownBar({ assets, liabilities }) {
 const bbStyles = {
   wrap: {
     padding: "20px 24px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1e293b",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 16, marginBottom: 20,
   },
   header: { marginBottom: 14 },
-  title: { fontSize: 11, letterSpacing: "0.18em", color: "#475569" },
+  title: { fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.16em", color: C.muted },
   bar: {
     display: "flex", height: 8, borderRadius: 99,
-    overflow: "hidden", background: "#0f172a", marginBottom: 14, gap: 2,
+    overflow: "hidden", background: "rgba(255,255,255,0.08)", marginBottom: 14, gap: 2,
   },
   segment: { height: "100%", borderRadius: 99, transition: "width 0.6s ease" },
-  legend: { display: "flex", gap: 32 },
+  legend: { display: "flex", gap: 32, flexWrap: "wrap" },
   legendItem: { display: "flex", alignItems: "center", gap: 8 },
   legendDot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
-  legendLabel: { fontSize: 12, color: "#64748b" },
-  legendVal: { fontSize: 13, color: "#cbd5e1", fontWeight: 500, fontFamily: "'DM Mono', monospace" },
-  legendPct: { fontSize: 11, color: "#475569" },
+  legendLabel: { fontSize: 13, color: C.body },
+  legendVal: { fontSize: 13, color: C.text, fontWeight: 500, fontFamily: "'DM Mono', monospace" },
+  legendPct: { fontSize: 12, color: C.muted, fontFamily: "'DM Mono', monospace" },
 };
 
 // ─── Top Assets / Liabilities Summary ────────────────────────────────────────
@@ -270,10 +288,12 @@ function SummaryList({ items, type }) {
     s + (isAsset ? (i.current_value || i.invested_value || 0) : (i.current_balance || 0)), 0
   );
 
+  const color = isAsset ? C.assets : C.negative;
+
   return (
     <div style={slStyles.wrap}>
       <div style={slStyles.header}>
-        <span style={{ ...slStyles.title, color: isAsset ? "#818cf8" : "#f87171" }}>
+        <span style={{ ...slStyles.title, color }}>
           {isAsset ? "▲ TOP ASSETS" : "▼ TOP LIABILITIES"}
         </span>
         <span style={slStyles.total}>{fmt(total)}</span>
@@ -281,11 +301,10 @@ function SummaryList({ items, type }) {
       {sorted.map((item, i) => {
         const val = isAsset ? (item.current_value || item.invested_value || 0) : (item.current_balance || 0);
         const pct = total ? (val / total) * 100 : 0;
-        const color = isAsset ? "#6366f1" : "#ef4444";
         return (
-          <div key={item._id || i} style={slStyles.row}>
+          <div key={item._id || i} style={{ ...slStyles.row, ...(i === sorted.length - 1 ? slStyles.rowLast : {}) }}>
             <div style={slStyles.rowLeft}>
-              <div style={{ ...slStyles.avatar, background: `${color}22`, color, border: `1px solid ${color}33` }}>
+              <div style={{ ...slStyles.avatar, background: `${color}1f`, color, border: `1px solid ${color}55` }}>
                 {(isAsset ? item.asset_name : item.liability_name)?.[0]?.toUpperCase()}
               </div>
               <div>
@@ -294,7 +313,7 @@ function SummaryList({ items, type }) {
               </div>
             </div>
             <div style={slStyles.rowRight}>
-              <span style={{ ...slStyles.val, color: isAsset ? "#a5b4fc" : "#fca5a5" }}>{fmt(val)}</span>
+              <span style={{ ...slStyles.val, color: C.text }}>{fmt(val)}</span>
               <div style={slStyles.miniBar}>
                 <div style={{ ...slStyles.miniFill, width: `${pct}%`, background: color }} />
               </div>
@@ -309,32 +328,33 @@ function SummaryList({ items, type }) {
 const slStyles = {
   wrap: {
     padding: "20px 22px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1e293b",
-    borderRadius: 16, flex: 1,
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 16, flex: 1, minWidth: 280,
   },
   header: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     marginBottom: 16,
   },
-  title: { fontSize: 10, letterSpacing: "0.18em" },
-  total: { fontSize: 13, color: "#475569", fontFamily: "'DM Mono', monospace" },
+  title: { fontFamily: "'DM Mono', monospace", fontSize: 10.5, letterSpacing: "0.16em" },
+  total: { fontSize: 13, color: C.body, fontFamily: "'DM Mono', monospace" },
   row: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     paddingBottom: 12, marginBottom: 12,
-    borderBottom: "1px solid #0f172a",
+    borderBottom: `1px solid ${C.borderSoft}`,
   },
+  rowLast: { borderBottom: "none", marginBottom: 0, paddingBottom: 0 },
   rowLeft: { display: "flex", alignItems: "center", gap: 10 },
   avatar: {
-    width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
     display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 13, fontFamily: "'DM Serif Display', serif",
+    fontSize: 14, fontFamily: "'DM Serif Display', serif",
   },
-  name: { fontSize: 13, color: "#cbd5e1", fontWeight: 500 },
-  sub: { fontSize: 11, color: "#475569" },
-  rowRight: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 },
-  val: { fontSize: 13, fontWeight: 500, fontFamily: "'DM Mono', monospace" },
-  miniBar: { width: 60, height: 3, background: "#1e293b", borderRadius: 99, overflow: "hidden" },
+  name: { fontSize: 14, color: C.text, fontWeight: 500 },
+  sub: { fontSize: 12, color: C.muted },
+  rowRight: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 },
+  val: { fontSize: 13.5, fontWeight: 500, fontFamily: "'DM Mono', monospace" },
+  miniBar: { width: 64, height: 3, background: "rgba(255,255,255,0.10)", borderRadius: 99, overflow: "hidden" },
   miniFill: { height: "100%", borderRadius: 99, transition: "width 0.5s ease" },
 };
 
@@ -386,8 +406,8 @@ export default function NetWorth() {
 
   if (loading) return (
     <div style={{ ...styles.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={styles.grain} />
-      <p style={{ fontFamily: "'DM Mono', monospace", color: "#334155", fontSize: 13, zIndex: 1 }}>
+      <div style={styles.glow} />
+      <p style={{ fontFamily: "'DM Mono', monospace", color: C.muted, fontSize: 13, zIndex: 1 }}>
         Computing net worth…
       </p>
     </div>
@@ -395,14 +415,14 @@ export default function NetWorth() {
 
   if (error) return (
     <div style={{ ...styles.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={styles.grain} />
-      <p style={{ fontFamily: "'DM Mono', monospace", color: "#f87171", fontSize: 13, zIndex: 1 }}>{error}</p>
+      <div style={styles.glow} />
+      <p style={{ fontFamily: "'DM Mono', monospace", color: C.negative, fontSize: 13, zIndex: 1 }}>{error}</p>
     </div>
   );
 
   return (
     <div style={styles.page}>
-      <div style={styles.grain} />
+      <div style={styles.glow} />
 
       <div style={styles.container}>
 
@@ -414,7 +434,7 @@ export default function NetWorth() {
           </div>
           <div style={styles.netWorthDisplay}>
             <span style={styles.netWorthLabel}>CURRENT NET WORTH</span>
-            <span style={{ ...styles.netWorthValue, color: gainColor(netWorth) }}>
+            <span style={{ ...styles.netWorthValue, color: netWorth < 0 ? C.negative : C.text }}>
               {fmtFull(netWorth)}
             </span>
             {change !== 0 && (
@@ -431,29 +451,25 @@ export default function NetWorth() {
             label="TOTAL ASSETS"
             value={fmt(totalAssets)}
             sub={`${assets.length} position${assets.length !== 1 ? "s" : ""}`}
-            color="#818cf8"
-            dimColor="#4338ca"
+            color={C.assets}
           />
           <StatCard
             label="TOTAL LIABILITIES"
             value={fmt(totalLiab)}
             sub={`${liabilities.length} liabilit${liabilities.length !== 1 ? "ies" : "y"}`}
-            color="#f87171"
-            dimColor="#dc2626"
+            color={C.negative}
           />
           <StatCard
             label="NET WORTH"
             value={fmt(netWorth)}
             sub={netWorth >= 0 ? "Positive position" : "Net negative"}
-            color={gainColor(netWorth)}
-            dimColor={gainColor(netWorth)}
+            color={netWorth >= 0 ? C.accent : C.negative}
           />
           <StatCard
             label="DEBT RATIO"
             value={totalAssets ? `${((totalLiab / totalAssets) * 100).toFixed(1)}%` : "—"}
             sub="Liabilities / Assets"
-            color="#fb923c"
-            dimColor="#c2410c"
+            color={C.amber}
           />
         </div>
 
@@ -493,78 +509,78 @@ export default function NetWorth() {
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradAssets" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.02} />
+                    <stop offset="5%"  stopColor={C.assets} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={C.assets} stopOpacity={0.02} />
                   </linearGradient>
                   <linearGradient id="gradLiab" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#f87171" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f87171" stopOpacity={0.02} />
+                    <stop offset="5%"  stopColor={C.negative} stopOpacity={0.22} />
+                    <stop offset="95%" stopColor={C.negative} stopOpacity={0.02} />
                   </linearGradient>
                   <linearGradient id="gradNW" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#2dd4bf" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0.02} />
+                    <stop offset="5%"  stopColor={C.accent} stopOpacity={0.32} />
+                    <stop offset="95%" stopColor={C.accent} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3" stroke="#0f172a" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" vertical={false} />
 
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: "#334155", fontSize: 11, fontFamily: "'DM Mono', monospace" }}
+                  tick={{ fill: C.muted, fontSize: 11, fontFamily: "'DM Mono', monospace" }}
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
                 />
                 <YAxis
                   tickFormatter={(v) => fmt(v)}
-                  tick={{ fill: "#334155", fontSize: 10, fontFamily: "'DM Mono', monospace" }}
+                  tick={{ fill: C.muted, fontSize: 10.5, fontFamily: "'DM Mono', monospace" }}
                   axisLine={false}
                   tickLine={false}
                   domain={[minVal - yPad, maxVal + yPad]}
                   width={90}
                 />
 
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#1e293b", strokeWidth: 1 }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.25)", strokeWidth: 1 }} />
 
                 {/* Zero reference line */}
-                <ReferenceLine y={0} stroke="#1e293b" strokeDasharray="4 4" />
+                <ReferenceLine y={0} stroke="rgba(255,255,255,0.25)" strokeDasharray="4 4" />
 
                 <Area
                   type="monotone"
                   dataKey="totalAssets"
                   name="Assets"
-                  stroke="#6366f1"
-                  strokeWidth={1.5}
+                  stroke={C.assets}
+                  strokeWidth={1.8}
                   fill="url(#gradAssets)"
                   dot={false}
-                  activeDot={{ r: 4, fill: "#6366f1", stroke: "#0f172a", strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: C.assets, stroke: C.bg, strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="totalLiabilities"
                   name="Liabilities"
-                  stroke="#f87171"
-                  strokeWidth={1.5}
+                  stroke={C.negative}
+                  strokeWidth={1.8}
                   fill="url(#gradLiab)"
                   dot={false}
-                  activeDot={{ r: 4, fill: "#f87171", stroke: "#0f172a", strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: C.negative, stroke: C.bg, strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="netWorth"
                   name="Net Worth"
-                  stroke="#2dd4bf"
-                  strokeWidth={2.5}
+                  stroke={C.accent}
+                  strokeWidth={2.6}
                   fill="url(#gradNW)"
                   dot={false}
-                  activeDot={{ r: 5, fill: "#2dd4bf", stroke: "#0f172a", strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: C.accent, stroke: C.bg, strokeWidth: 2 }}
                 />
 
                 <Legend
                   wrapperStyle={{
                     fontFamily: "'DM Mono', monospace",
-                    fontSize: 11,
-                    color: "#475569",
+                    fontSize: 11.5,
+                    color: C.body,
                     paddingTop: 16,
                     letterSpacing: "0.06em",
                   }}
@@ -590,12 +606,13 @@ export default function NetWorth() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        button { font-family: inherit; }
       `}</style>
     </div>
   );
@@ -606,14 +623,15 @@ export default function NetWorth() {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #060912 0%, #090f1f 50%, #060b18 100%)",
-    fontFamily: "'DM Mono', monospace",
-    color: "#e2e8f0",
+    background: C.bg,
+    fontFamily: "'DM Sans', sans-serif",
+    color: C.text,
     position: "relative",
   },
-  grain: {
-    position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+  glow: {
+    position: "fixed", top: -120, right: -80, width: 560, height: 420,
+    borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+    background: "radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 65%)",
   },
   container: {
     position: "relative", zIndex: 1,
@@ -627,25 +645,28 @@ const styles = {
     alignItems: "flex-end", flexWrap: "wrap", gap: 24,
     marginBottom: 32,
   },
-  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: "#1e3a5f", marginBottom: 6 },
+  pageEyebrow: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11, letterSpacing: "0.2em", color: C.accent, marginBottom: 8,
+  },
   pageTitle: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 52, fontWeight: 400, color: "#f0f9ff",
+    fontSize: 52, fontWeight: 400, color: C.text,
     lineHeight: 1, letterSpacing: "-1px",
   },
   netWorthDisplay: {
-    display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4,
+    display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5,
     padding: "16px 22px",
-    background: "rgba(45,212,191,0.04)",
-    border: "1px solid rgba(45,212,191,0.12)",
+    background: "rgba(52,211,153,0.07)",
+    border: "1px solid rgba(52,211,153,0.3)",
     borderRadius: 14,
   },
-  netWorthLabel: { fontSize: 10, letterSpacing: "0.2em", color: "#0d9488" },
+  netWorthLabel: { fontFamily: "'DM Mono', monospace", fontSize: 10.5, letterSpacing: "0.18em", color: C.accent },
   netWorthValue: {
     fontFamily: "'DM Serif Display', serif",
     fontSize: 36, fontWeight: 400, letterSpacing: "-1px", lineHeight: 1,
   },
-  netWorthChange: { fontSize: 12, letterSpacing: "0.02em" },
+  netWorthChange: { fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.02em" },
 
   statsGrid: {
     display: "flex", gap: 12, flexWrap: "wrap",
@@ -654,8 +675,8 @@ const styles = {
 
   chartCard: {
     padding: "24px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #0f1e35",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 18,
     marginBottom: 20,
     minWidth: 0,
@@ -668,32 +689,32 @@ const styles = {
   },
   chartTitle: {
     display: "block",
-    fontSize: 14, fontWeight: 500, color: "#94a3b8",
-    letterSpacing: "0.02em", marginBottom: 4,
+    fontSize: 16, fontWeight: 500, color: C.text,
+    letterSpacing: "0.01em", marginBottom: 4,
   },
-  chartSub: { display: "block", fontSize: 11, color: "#1e3a5f" },
+  chartSub: { display: "block", fontSize: 12, color: C.muted },
   rangeRow: { display: "flex", gap: 4 },
   rangeBtn: {
-    padding: "5px 12px",
+    padding: "6px 13px",
     background: "transparent",
-    border: "1px solid #1e293b",
-    borderRadius: 7, color: "#334155",
-    fontSize: 11, fontFamily: "'DM Mono', monospace",
+    border: `1px solid ${C.border}`,
+    borderRadius: 7, color: C.body,
+    fontSize: 11.5, fontFamily: "'DM Mono', monospace",
     cursor: "pointer", letterSpacing: "0.06em",
     transition: "all 0.15s",
   },
   rangeBtnActive: {
-    background: "rgba(45,212,191,0.1)",
-    borderColor: "rgba(45,212,191,0.3)",
-    color: "#2dd4bf",
+    background: "rgba(52,211,153,0.14)",
+    borderColor: "rgba(52,211,153,0.5)",
+    color: C.accent,
   },
   chartEmpty: {
     height: 240, display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center", gap: 12,
   },
-  chartEmptyIcon: { fontSize: 36, color: "#0f172a" },
+  chartEmptyIcon: { fontSize: 36, color: "rgba(52,211,153,0.35)" },
   chartEmptyText: {
-    fontSize: 13, color: "#1e293b", maxWidth: 320, textAlign: "center", lineHeight: 1.6,
+    fontSize: 14, color: C.body, maxWidth: 340, textAlign: "center", lineHeight: 1.6,
   },
 
   listsRow: { display: "flex", gap: 16, flexWrap: "wrap" },

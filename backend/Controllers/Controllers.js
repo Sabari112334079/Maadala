@@ -611,33 +611,70 @@ const register = async (req, res) => {
   }
 };
 
-// POST /api/auth/login
+
 const login = async (req, res) => {
   try {
+    console.log("1. Login route reached");
+
     const { email, password } = req.body;
 
-    if (!email || !password)
-      return res.status(400).json({ message: "Email and password are required." });
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required.",
+      });
+    }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
-    if (!user)
-      return res.status(401).json({ message: "Invalid email or password." });
+    console.log("2. Credentials received; querying user");
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    }).select("+password");
+
+    console.log("3. User query completed:", !!user);
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
+    }
+
+    console.log("4. Comparing password");
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid)
-      return res.status(401).json({ message: "Invalid email or password." });
+
+    console.log("5. Password comparison completed:", valid);
+
+    if (!valid) {
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
+    }
+
+    console.log("6. Generating token");
 
     const token = signToken(user._id);
 
-    res.status(200).json({
+    console.log("7. Sending successful response");
+
+    return res.status(200).json({
       message: "Logged in successfully.",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: "Login failed.", error: error.message });
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      message: "Login failed.",
+      error: error.message,
+    });
   }
 };
+
 
 // GET /api/auth/me — reads token directly from Authorization header (no middleware needed)
 const getMe = async (req, res) => {
@@ -688,9 +725,11 @@ const updateProfile = async (req, res) => {
 
     res.status(200).json({ message: "Profile updated.", user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
-    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError")
-      return res.status(401).json({ message: "Token invalid or expired." });
-    res.status(500).json({ message: "Failed to update profile.", error: err.message });
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+    console.log("[JWT]", err.name, "-", err.message);
+    return res.status(401).json({ message: `Token invalid or expired (${err.message})` });
+  }
+  res.status(500).json({ message: "Failed to update profile.", error: err.message });
   }
 };
 

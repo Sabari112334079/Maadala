@@ -1,9 +1,27 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "https://maadala.onrender.com/api/liabilities";
+const API_BASE = "http://localhost:5000/api/liabilities";
+
+// ─── Theme (shared palette; red is this section's accent) ─────────────────────
+const C = {
+  bg:         "#07080d",
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.12)",
+  borderSoft: "rgba(255,255,255,0.07)",
+  surface:    "rgba(255,255,255,0.035)",
+  red:        "#f87171",   // section accent (liabilities)
+  redDeep:    "#ef4444",
+  redDark:    "#b91c1c",
+  redSoft:    "#fecaca",
+  green:      "#34d399",   // positive: paid / payments
+  greenDark:  "#0d9488",
+};
 
 const formatCurrency = (val) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val || 0);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(val || 0);
 
 const formatDate = (d) => {
   if (!d) return "—";
@@ -28,11 +46,11 @@ const TYPE_LABELS = {
 
 const TYPE_COLORS = {
   loan: "#fb923c",
-  mortgage: "#a78bfa",
+  mortgage: "#c4b5fd",
   credit_card: "#f87171",
-  student_loan: "#60a5fa",
+  student_loan: "#93c5fd",
   auto_loan: "#34d399",
-  other: "#94a3b8",
+  other: "#cbd5e1",
 };
 
 const EMPTY_FORM = {
@@ -119,13 +137,13 @@ function BalanceCell({ liability, onUpdated }) {
       ) : (
         <div style={styles.currentValueRow}>
           <span
-            style={{ ...styles.metaValue, color: "#fca5a5", cursor: "pointer" }}
+            style={{ ...styles.metaValue, color: C.redSoft, cursor: "pointer" }}
             onClick={startEdit}
             title="Click to update balance"
           >
             {formatCurrency(liability.current_balance)}
           </span>
-          <button style={styles.editValueBtn} onClick={startEdit} title="Edit balance">✎</button>
+          <button style={styles.editValueBtn} onClick={startEdit} title="Edit balance" aria-label="Edit balance">✎</button>
         </div>
       )}
 
@@ -195,10 +213,10 @@ function PaymentModal({ liability, onClose, onUpdated }) {
       <div style={{ ...styles.modal, maxWidth: 480 }}>
         <div style={styles.modalHeader}>
           <div>
-            <div style={{ ...styles.modalTag, color: "#4ade80" }}>MAKE PAYMENT</div>
+            <div style={{ ...styles.modalTag, color: C.green }}>MAKE PAYMENT</div>
             <h2 style={styles.modalTitle}>{liability.liability_name}</h2>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         <div style={styles.modalBody}>
@@ -208,14 +226,14 @@ function PaymentModal({ liability, onClose, onUpdated }) {
           <div style={styles.snapshotRow}>
             <div style={styles.snapshotItem}>
               <span style={styles.snapshotLabel}>CURRENT BALANCE</span>
-              <span style={{ ...styles.snapshotValue, color: "#fca5a5" }}>
+              <span style={{ ...styles.snapshotValue, color: C.redSoft }}>
                 {formatCurrency(liability.current_balance)}
               </span>
             </div>
             <div style={styles.snapshotArrow}>→</div>
-            <div style={{ ...styles.snapshotItem, opacity: newBalance !== null ? 1 : 0.3 }}>
-              <span style={{ ...styles.snapshotLabel, color: "#4ade80" }}>AFTER PAYMENT</span>
-              <span style={{ ...styles.snapshotValue, color: "#4ade80" }}>
+            <div style={{ ...styles.snapshotItem, opacity: newBalance !== null ? 1 : 0.4 }}>
+              <span style={{ ...styles.snapshotLabel, color: C.green }}>AFTER PAYMENT</span>
+              <span style={{ ...styles.snapshotValue, color: C.green }}>
                 {newBalance !== null ? formatCurrency(newBalance) : "—"}
               </span>
             </div>
@@ -223,9 +241,14 @@ function PaymentModal({ liability, onClose, onUpdated }) {
 
           {/* Progress preview */}
           {newPct !== null && (
-            <div style={styles.progressPreview}>
-              <div style={{ ...styles.progressBar, width: `${newPct}%`, background: "linear-gradient(90deg,#16a34a,#4ade80)" }} />
-              <span style={{ ...styles.progressLabel, color: "#4ade80" }}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={styles.progressPreview}>
+                <div style={{
+                  ...styles.progressBar, width: `${newPct}%`,
+                  background: `linear-gradient(90deg, ${C.greenDark}, ${C.green})`,
+                }} />
+              </div>
+              <span style={{ ...styles.progressLabel, color: C.green }}>
                 {newPct.toFixed(1)}% paid off after this payment
               </span>
             </div>
@@ -363,7 +386,7 @@ function LiabilityModal({ onClose, onSaved, editLiability = null }) {
             <div style={styles.modalTag}>{isEdit ? "EDIT LIABILITY" : "NEW LIABILITY"}</div>
             <h2 style={styles.modalTitle}>{isEdit ? "Edit Liability" : "Add Liability"}</h2>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         <div style={styles.modalBody}>
@@ -406,7 +429,7 @@ function LiabilityModal({ onClose, onSaved, editLiability = null }) {
                 onChange={handleChange}
               >
                 {Object.entries(TYPE_LABELS).map(([val, label]) => (
-                  <option key={val} value={val} style={{ background: "#0f172a" }}>
+                  <option key={val} value={val} style={{ background: "#0a121a", color: "#ffffff" }}>
                     {label}
                   </option>
                 ))}
@@ -545,16 +568,16 @@ function DeleteModal({ liability, onClose, onDeleted }) {
       <div style={{ ...styles.modal, maxWidth: 420 }}>
         <div style={styles.modalHeader}>
           <div>
-            <div style={{ ...styles.modalTag, color: "#ef4444" }}>CONFIRM DELETE</div>
+            <div style={{ ...styles.modalTag, color: C.red }}>CONFIRM DELETE</div>
             <h2 style={styles.modalTitle}>Remove Liability</h2>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div style={{ ...styles.modalBody, paddingBottom: 8 }}>
           {error && <div style={styles.errorBanner}>{error}</div>}
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7 }}>
+          <p style={{ fontSize: 14.5, color: C.body, lineHeight: 1.7 }}>
             Remove{" "}
-            <span style={{ color: "#f1f5f9", fontWeight: 500 }}>{liability.liability_name}</span>{" "}
+            <span style={{ color: C.text, fontWeight: 600 }}>{liability.liability_name}</span>{" "}
             from your liabilities? Payment history will be lost permanently.
           </p>
         </div>
@@ -574,21 +597,25 @@ function DeleteModal({ liability, onClose, onDeleted }) {
 function LiabilityRow({ liability, onEdit, onDelete, onPay, onBalanceUpdated }) {
   const [hovered, setHovered] = useState(false);
 
-  const typeColor = TYPE_COLORS[liability.liability_type] || "#94a3b8";
+  const typeColor = TYPE_COLORS[liability.liability_type] || "#cbd5e1";
   const monthsLeft = liability.monthly_payment > 0
     ? Math.ceil(liability.current_balance / liability.monthly_payment)
     : null;
 
   return (
     <div
-      style={{ ...styles.row, borderColor: hovered ? "#3f2a2a" : "#1e1a1a" }}
+      style={{
+        ...styles.row,
+        borderColor: hovered ? "rgba(248,113,113,0.4)" : C.border,
+        background: hovered ? "rgba(255,255,255,0.055)" : C.surface,
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Left */}
       <div style={styles.rowLeft}>
-        <div style={{ ...styles.assetAvatar, background: `linear-gradient(135deg, ${typeColor}22, ${typeColor}44)`, border: `1px solid ${typeColor}44` }}>
-          <span style={{ color: typeColor, fontSize: 16, fontFamily: "'DM Serif Display', serif" }}>
+        <div style={{ ...styles.assetAvatar, background: `${typeColor}1f`, border: `1px solid ${typeColor}55` }}>
+          <span style={{ color: typeColor, fontSize: 17, fontFamily: "'DM Serif Display', serif" }}>
             {liability.liability_name?.[0]?.toUpperCase() ?? "?"}
           </span>
         </div>
@@ -596,7 +623,7 @@ function LiabilityRow({ liability, onEdit, onDelete, onPay, onBalanceUpdated }) 
           <div style={styles.assetName}>{liability.liability_name}</div>
           <div style={styles.rowSubLine}>
             <span style={styles.assetInstitution}>{liability.lender}</span>
-            <span style={{ ...styles.typeBadge, borderColor: `${typeColor}44`, color: typeColor }}>
+            <span style={{ ...styles.typeBadge, borderColor: `${typeColor}66`, color: typeColor }}>
               {TYPE_LABELS[liability.liability_type]}
             </span>
           </div>
@@ -609,7 +636,7 @@ function LiabilityRow({ liability, onEdit, onDelete, onPay, onBalanceUpdated }) 
           <span style={styles.metaLabel}>ORIGINAL</span>
           <span style={styles.metaValue}>{formatCurrency(liability.original_amount)}</span>
           {liability.interest_rate > 0 && (
-            <span style={{ fontSize: 11, color: "#fb923c" }}>{liability.interest_rate}% p.a.</span>
+            <span style={{ fontSize: 11.5, color: "#fdba74" }}>{liability.interest_rate}% p.a.</span>
           )}
         </div>
 
@@ -625,7 +652,7 @@ function LiabilityRow({ liability, onEdit, onDelete, onPay, onBalanceUpdated }) 
             {liability.monthly_payment > 0 ? formatCurrency(liability.monthly_payment) : "—"}
           </span>
           {monthsLeft !== null && (
-            <span style={{ fontSize: 11, color: "#64748b" }}>~{monthsLeft} mo left</span>
+            <span style={{ fontSize: 11.5, color: C.muted }}>~{monthsLeft} mo left</span>
           )}
         </div>
 
@@ -646,8 +673,8 @@ function LiabilityRow({ liability, onEdit, onDelete, onPay, onBalanceUpdated }) 
           ↓ Pay
         </button>
         <div style={styles.actionDivider} />
-        <button style={styles.editBtn} onClick={() => onEdit(liability)} title="Edit details">✎</button>
-        <button style={styles.deleteBtn} onClick={() => onDelete(liability)} title="Delete">✕</button>
+        <button style={styles.editBtn} onClick={() => onEdit(liability)} title="Edit details" aria-label="Edit details">✎</button>
+        <button style={styles.deleteBtn} onClick={() => onDelete(liability)} title="Delete" aria-label="Delete">✕</button>
       </div>
     </div>
   );
@@ -700,7 +727,7 @@ export default function LiabilityManager() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.grain} />
+      <div style={styles.glow} />
 
       <div style={styles.container}>
         {/* Header */}
@@ -714,17 +741,17 @@ export default function LiabilityManager() {
               <div style={styles.statsRow}>
                 <div style={styles.statBadge}>
                   <span style={styles.statLabel}>TOTAL DEBT</span>
-                  <span style={{ ...styles.statValue, color: "#fca5a5" }}>
+                  <span style={{ ...styles.statValue, color: C.redSoft }}>
                     {formatCurrency(totalBalance)}
                   </span>
                 </div>
                 <div style={styles.statArrow}>→</div>
-                <div style={{ ...styles.statBadge, borderColor: "rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.05)" }}>
-                  <span style={{ ...styles.statLabel, color: "#4ade80" }}>PAID OFF</span>
-                  <span style={{ ...styles.statValue, color: "#4ade80" }}>
+                <div style={{ ...styles.statBadge, borderColor: "rgba(52,211,153,0.35)", background: "rgba(52,211,153,0.08)" }}>
+                  <span style={{ ...styles.statLabel, color: C.green }}>PAID OFF</span>
+                  <span style={{ ...styles.statValue, color: C.text }}>
                     {formatCurrency(totalPaidOff)}
                   </span>
-                  <span style={{ fontSize: 11, color: "#4ade80", marginTop: 1 }}>
+                  <span style={{ fontSize: 11.5, color: C.green, marginTop: 2 }}>
                     {overallPct.toFixed(1)}% cleared
                   </span>
                 </div>
@@ -752,7 +779,7 @@ export default function LiabilityManager() {
           </div>
         ) : fetchError ? (
           <div style={styles.centerState}>
-            <p style={{ color: "#f87171", fontSize: 14 }}>{fetchError}</p>
+            <p style={{ color: C.red, fontSize: 14 }}>{fetchError}</p>
           </div>
         ) : liabilities.length === 0 ? (
           <div style={styles.centerState}>
@@ -767,7 +794,7 @@ export default function LiabilityManager() {
           <>
             <div style={styles.listMeta}>
               <span style={styles.listCount}>
-                {liabilities.length} liabilit{liabilities.length !== 1 ? "ies" : "y"}
+                {liabilities.length} LIABILIT{liabilities.length !== 1 ? "IES" : "Y"}
               </span>
               <span style={styles.listHint}>Hover a row · Click balance to update</span>
             </div>
@@ -813,7 +840,7 @@ export default function LiabilityManager() {
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(18px); }
@@ -823,15 +850,18 @@ export default function LiabilityManager() {
           from { opacity: 0; transform: scale(0.94) translateY(10px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
-        input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.4); }
+        input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.85); cursor: pointer; }
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; }
         input[type=number] { -moz-appearance: textfield; }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.35); }
         input:focus, textarea:focus, select:focus {
-          border-color: rgba(251,146,60,0.5) !important;
-          background: rgba(251,146,60,0.04) !important;
+          border-color: rgba(248,113,113,0.6) !important;
+          background: rgba(248,113,113,0.06) !important;
+          box-shadow: 0 0 0 3px rgba(248,113,113,0.12);
           outline: none;
         }
+        button { font-family: inherit; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
@@ -843,14 +873,15 @@ export default function LiabilityManager() {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #130a0a 0%, #1a0f0f 50%, #110909 100%)",
-    fontFamily: "'DM Mono', monospace",
-    color: "#e2e8f0",
+    background: C.bg,
+    fontFamily: "'DM Sans', sans-serif",
+    color: C.text,
     position: "relative",
   },
-  grain: {
-    position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+  glow: {
+    position: "fixed", top: -120, right: -80, width: 560, height: 420,
+    borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+    background: "radial-gradient(circle, rgba(248,113,113,0.08) 0%, transparent 65%)",
   },
   container: {
     position: "relative", zIndex: 1,
@@ -862,10 +893,13 @@ const styles = {
     display: "flex", justifyContent: "space-between",
     alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 20,
   },
-  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: "#57291a", marginBottom: 6 },
+  pageEyebrow: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 11, letterSpacing: "0.2em", color: C.red, marginBottom: 8,
+  },
   pageTitle: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 52, fontWeight: 400, color: "#fef2f2",
+    fontSize: 52, fontWeight: 400, color: C.text,
     lineHeight: 1, letterSpacing: "-1px",
   },
   headerRight: { display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" },
@@ -873,97 +907,103 @@ const styles = {
   statBadge: {
     display: "flex", flexDirection: "column", alignItems: "flex-end",
     padding: "10px 14px",
-    background: "rgba(248,113,113,0.06)",
-    border: "1px solid rgba(248,113,113,0.18)",
-    borderRadius: 10, minWidth: 120,
+    background: "rgba(248,113,113,0.08)",
+    border: "1px solid rgba(248,113,113,0.3)",
+    borderRadius: 10, minWidth: 128,
   },
-  statLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#f87171", marginBottom: 3 },
-  statValue: { fontSize: 18, fontWeight: 500, color: "#fca5a5", letterSpacing: "-0.5px" },
-  statArrow: { fontSize: 16, color: "#3f1a1a" },
+  statLabel: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 10, letterSpacing: "0.14em", color: C.red, marginBottom: 4,
+  },
+  statValue: {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 18, fontWeight: 500, color: C.text, letterSpacing: "-0.5px",
+  },
+  statArrow: { fontSize: 16, color: C.faint },
   addBtn: {
     display: "inline-flex", alignItems: "center", gap: 8,
     padding: "12px 22px",
-    background: "linear-gradient(135deg, #c2410c, #ea580c)",
-    color: "#fff", border: "none", borderRadius: 10,
-    fontSize: 14, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-    cursor: "pointer", letterSpacing: "0.03em",
-    boxShadow: "0 4px 20px rgba(234,88,12,0.3)",
+    background: `linear-gradient(135deg, ${C.redDeep}, ${C.redDark})`,
+    color: "#ffffff", border: "none", borderRadius: 10,
+    fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+    cursor: "pointer", letterSpacing: "0.02em",
+    boxShadow: "0 0 30px rgba(239,68,68,0.25)",
   },
   overallProgress: {
-    height: 4, background: "#1e1212", borderRadius: 99, marginBottom: 20, overflow: "hidden",
+    height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 99, marginBottom: 20, overflow: "hidden",
   },
   divider: {
     height: 1,
-    background: "linear-gradient(90deg, transparent, #2a1414 30%, #2a1414 70%, transparent)",
+    background: `linear-gradient(90deg, transparent, ${C.border} 30%, ${C.border} 70%, transparent)`,
     marginBottom: 24,
   },
   listMeta: {
     display: "flex", justifyContent: "space-between",
     alignItems: "center", marginBottom: 12,
   },
-  listCount: { fontSize: 11, letterSpacing: "0.1em", color: "#57291a" },
-  listHint: { fontSize: 11, color: "#3f1a1a" },
+  listCount: { fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.12em", color: C.muted },
+  listHint: { fontSize: 12, color: C.faint },
   list: { display: "flex", flexDirection: "column", gap: 10 },
 
   row: {
     display: "flex", justifyContent: "space-between",
     alignItems: "center", flexWrap: "wrap", gap: 16,
     padding: "18px 22px",
-    background: "rgba(30,10,10,0.8)",
-    border: "1px solid #1e1a1a", borderRadius: 14,
-    backdropFilter: "blur(10px)",
+    background: C.surface,
+    border: `1px solid ${C.border}`, borderRadius: 14,
     animation: "fadeUp 0.4s ease both",
-    transition: "border-color 0.2s",
+    transition: "border-color 0.2s, background 0.2s",
   },
   rowLeft: { display: "flex", alignItems: "center", gap: 14, minWidth: 200 },
   assetAvatar: {
     width: 44, height: 44, borderRadius: 12, flexShrink: 0,
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  assetName: { fontSize: 15, fontWeight: 500, color: "#fef2f2", marginBottom: 4 },
+  assetName: { fontSize: 15.5, fontWeight: 500, color: C.text, marginBottom: 4 },
   rowSubLine: { display: "flex", alignItems: "center", gap: 8 },
-  assetInstitution: { fontSize: 12, color: "#57291a", letterSpacing: "0.04em" },
+  assetInstitution: { fontSize: 12.5, color: C.muted, letterSpacing: "0.02em" },
   typeBadge: {
-    fontSize: 10, letterSpacing: "0.1em", padding: "2px 7px",
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 10, letterSpacing: "0.08em", padding: "2px 7px",
     border: "1px solid", borderRadius: 5,
   },
   rowMeta: { display: "flex", gap: 0, flexWrap: "wrap", flex: 1, alignItems: "center" },
   metaDivider: {
-    width: 1, height: 36, background: "#2a1414", margin: "0 20px", flexShrink: 0,
+    width: 1, height: 36, background: C.border, margin: "0 20px", flexShrink: 0,
   },
-  metaItem: { display: "flex", flexDirection: "column", gap: 2, minWidth: 110 },
-  metaLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#57291a" },
-  metaValue: { fontSize: 15, color: "#e2c5c5", fontWeight: 500 },
+  metaItem: { display: "flex", flexDirection: "column", gap: 3, minWidth: 110 },
+  metaLabel: { fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.14em", color: C.muted },
+  metaValue: { fontFamily: "'DM Mono', monospace", fontSize: 15, color: C.text, fontWeight: 500 },
 
   currentValueRow: { display: "flex", alignItems: "center", gap: 6 },
   editValueBtn: {
-    background: "none", border: "none", color: "#57291a",
-    fontSize: 13, cursor: "pointer", padding: "0 2px", opacity: 0.7,
+    background: "none", border: "none", color: C.muted,
+    fontSize: 13, cursor: "pointer", padding: "0 2px",
   },
   inlineEditRow: {
     display: "flex", alignItems: "center", gap: 4,
-    background: "rgba(251,146,60,0.08)",
-    border: "1px solid rgba(251,146,60,0.35)",
+    background: "rgba(248,113,113,0.08)",
+    border: "1px solid rgba(248,113,113,0.45)",
     borderRadius: 7, padding: "3px 8px",
   },
-  currencyPrefix: { fontSize: 13, color: "#fb923c" },
+  currencyPrefix: { fontSize: 13, color: C.red },
   inlineInput: {
     background: "none", border: "none", outline: "none",
-    color: "#fef2f2", fontSize: 14, fontFamily: "'DM Mono', monospace",
+    color: C.text, fontSize: 14, fontFamily: "'DM Mono', monospace",
     fontWeight: 500, width: 90,
   },
 
   progressWrap: {
-    height: 3, background: "#2a1414", borderRadius: 99,
+    height: 3, background: "rgba(255,255,255,0.10)", borderRadius: 99,
     overflow: "hidden", marginTop: 4,
   },
   progressBar: {
     height: "100%",
-    background: "linear-gradient(90deg, #c2410c, #fb923c)",
+    background: `linear-gradient(90deg, ${C.redDark}, ${C.red})`,
     borderRadius: 99,
     transition: "width 0.4s ease",
   },
-  progressLabel: { fontSize: 10, color: "#57291a", marginTop: 2, letterSpacing: "0.03em" },
+  progressLabel: { fontFamily: "'DM Mono', monospace", fontSize: 10.5, color: C.muted, marginTop: 3, letterSpacing: "0.02em" },
 
   rowActions: {
     display: "flex", alignItems: "center", gap: 6,
@@ -971,23 +1011,23 @@ const styles = {
   },
   payBtn: {
     padding: "7px 14px", borderRadius: 8,
-    background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)",
-    color: "#4ade80", fontSize: 12, fontFamily: "'DM Mono', monospace",
-    fontWeight: 500, cursor: "pointer", letterSpacing: "0.03em",
+    background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.35)",
+    color: C.green, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 600, cursor: "pointer", letterSpacing: "0.02em",
   },
   actionDivider: {
-    width: 1, height: 20, background: "#2a1414", margin: "0 2px", flexShrink: 0,
+    width: 1, height: 20, background: C.border, margin: "0 2px", flexShrink: 0,
   },
   editBtn: {
     width: 30, height: 30, borderRadius: 8,
-    background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)",
-    color: "#fb923c", fontSize: 14, cursor: "pointer",
+    background: "rgba(255,255,255,0.06)", border: `1px solid ${C.border}`,
+    color: C.body, fontSize: 14, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   deleteBtn: {
     width: 30, height: 30, borderRadius: 8,
-    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)",
-    color: "#f87171", fontSize: 12, cursor: "pointer",
+    background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.3)",
+    color: C.red, fontSize: 12, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
 
@@ -995,121 +1035,121 @@ const styles = {
     display: "flex", flexDirection: "column", alignItems: "center",
     justifyContent: "center", paddingTop: 80, gap: 10, textAlign: "center",
   },
-  emptyIcon: { fontSize: 48, color: "#2a1414", lineHeight: 1, marginBottom: 8 },
-  stateTitle: { fontSize: 20, fontFamily: "'DM Serif Display', serif", color: "#7f4040" },
-  stateText: { fontSize: 13, color: "#57291a", maxWidth: 300, lineHeight: 1.6 },
+  emptyIcon: { fontSize: 48, color: "rgba(248,113,113,0.35)", lineHeight: 1, marginBottom: 8 },
+  stateTitle: { fontSize: 22, fontFamily: "'DM Serif Display', serif", color: C.text },
+  stateText: { fontSize: 14, color: C.body, maxWidth: 320, lineHeight: 1.6 },
 
   // ── Shared modal styles ──
   overlay: {
     position: "fixed", inset: 0,
-    background: "rgba(8,2,2,0.92)",
+    background: "rgba(3,5,9,0.82)",
     backdropFilter: "blur(8px)", zIndex: 1000,
     display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
   },
   modal: {
     width: "100%", maxWidth: 540,
-    background: "linear-gradient(145deg, #1a0a0a, #150808)",
-    border: "1px solid #2a1414", borderRadius: 20,
-    boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(251,146,60,0.06)",
+    background: "linear-gradient(160deg, #0a121a 0%, #060b11 100%)",
+    border: `1px solid ${C.border}`, borderRadius: 20,
+    boxShadow: "0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(248,113,113,0.06)",
     animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both",
     overflow: "hidden",
   },
   modalHeader: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-    padding: "26px 26px 18px", borderBottom: "1px solid #2a1414",
+    padding: "26px 26px 18px", borderBottom: `1px solid ${C.borderSoft}`,
   },
-  modalTag: { fontSize: 10, letterSpacing: "0.2em", color: "#fb923c", marginBottom: 5 },
+  modalTag: { fontFamily: "'DM Mono', monospace", fontSize: 10.5, letterSpacing: "0.2em", color: C.red, marginBottom: 6 },
   modalTitle: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 26, fontWeight: 400, color: "#fef2f2",
+    fontSize: 27, fontWeight: 400, color: C.text,
   },
   closeBtn: {
-    background: "rgba(255,255,255,0.03)", border: "1px solid #2a1414",
-    borderRadius: 8, color: "#57291a", width: 30, height: 30,
+    background: "rgba(255,255,255,0.05)", border: `1px solid ${C.border}`,
+    borderRadius: 8, color: C.body, width: 30, height: 30,
     display: "flex", alignItems: "center", justifyContent: "center",
     cursor: "pointer", fontSize: 12,
   },
   modalBody: { padding: "22px 26px" },
   errorBanner: {
     padding: "10px 14px",
-    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-    borderRadius: 8, color: "#fca5a5", fontSize: 13, marginBottom: 16,
+    background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.35)",
+    borderRadius: 8, color: C.redSoft, fontSize: 13, marginBottom: 16,
   },
   infoBanner: {
     padding: "10px 14px",
-    background: "rgba(251,146,60,0.06)", border: "1px solid rgba(251,146,60,0.18)",
-    borderRadius: 8, color: "#fb923c", fontSize: 12, marginBottom: 16, lineHeight: 1.5,
+    background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.28)",
+    borderRadius: 8, color: C.body, fontSize: 12.5, marginBottom: 16, lineHeight: 1.55,
   },
   fieldGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
   fieldFull: { gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 },
   fieldHalf: { display: "flex", flexDirection: "column", gap: 6 },
-  label: { fontSize: 11, letterSpacing: "0.1em", color: "#7f4040" },
-  labelHint: { fontSize: 10, color: "#3f1a1a", letterSpacing: "0" },
-  req: { color: "#fb923c" },
+  label: { fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.08em", color: C.body },
+  labelHint: { fontSize: 10, color: C.faint, letterSpacing: "0" },
+  req: { color: C.red },
   input: {
-    width: "100%", padding: "10px 13px",
-    background: "rgba(255,255,255,0.03)", border: "1px solid #2a1414",
-    borderRadius: 10, color: "#fef2f2", fontSize: 14,
-    fontFamily: "'DM Mono', monospace", outline: "none",
-    transition: "border-color 0.15s, background 0.15s",
+    width: "100%", padding: "11px 13px",
+    background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`,
+    borderRadius: 10, color: C.text, fontSize: 14,
+    fontFamily: "'DM Sans', sans-serif", outline: "none",
+    transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
   },
   textarea: { resize: "vertical", minHeight: 70, lineHeight: 1.6 },
   modalFooter: {
     display: "flex", justifyContent: "flex-end", gap: 10,
-    padding: "16px 26px 22px", borderTop: "1px solid #2a1414",
+    padding: "16px 26px 22px", borderTop: `1px solid ${C.borderSoft}`,
   },
   cancelBtn: {
     padding: "10px 18px", background: "transparent",
-    border: "1px solid #2a1414", borderRadius: 10,
-    color: "#57291a", fontSize: 13, fontFamily: "'DM Mono', monospace", cursor: "pointer",
+    border: "1px solid rgba(255,255,255,0.22)", borderRadius: 10,
+    color: C.text, fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 500, cursor: "pointer",
   },
   saveBtn: {
     padding: "10px 22px",
-    background: "linear-gradient(135deg, #c2410c, #ea580c)",
-    border: "none", borderRadius: 10, color: "#fff",
-    fontSize: 13, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-    cursor: "pointer", boxShadow: "0 4px 16px rgba(234,88,12,0.3)",
+    background: `linear-gradient(135deg, ${C.redDeep}, ${C.redDark})`,
+    border: "none", borderRadius: 10, color: "#ffffff",
+    fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+    cursor: "pointer", boxShadow: "0 0 24px rgba(239,68,68,0.25)",
   },
   payConfirmBtn: {
     padding: "10px 22px",
-    background: "linear-gradient(135deg, #16a34a, #4ade80)",
-    border: "none", borderRadius: 10, color: "#052e16",
-    fontSize: 13, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-    cursor: "pointer", boxShadow: "0 4px 16px rgba(74,222,128,0.25)",
+    background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
+    border: "none", borderRadius: 10, color: "#041009",
+    fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+    cursor: "pointer", boxShadow: "0 0 24px rgba(52,211,153,0.22)",
   },
   deleteConfirmBtn: {
     padding: "10px 22px",
-    background: "linear-gradient(135deg, #7f1d1d, #dc2626)",
+    background: "linear-gradient(135deg, #b91c1c, #dc2626)",
     border: "none", borderRadius: 10, color: "#fff",
-    fontSize: 13, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-    cursor: "pointer", boxShadow: "0 4px 16px rgba(220,38,38,0.2)",
+    fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+    cursor: "pointer", boxShadow: "0 0 24px rgba(220,38,38,0.22)",
   },
 
   // ── Payment modal specific ──
   snapshotRow: {
     display: "flex", alignItems: "center", gap: 10,
     padding: "14px 16px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #2a1414", borderRadius: 10,
+    background: C.surface,
+    border: `1px solid ${C.border}`, borderRadius: 10,
     marginBottom: 16,
   },
-  snapshotItem: { display: "flex", flexDirection: "column", gap: 3, flex: 1 },
-  snapshotLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#57291a" },
-  snapshotValue: { fontSize: 18, fontWeight: 500, color: "#e2c5c5", letterSpacing: "-0.3px" },
-  snapshotArrow: { fontSize: 18, color: "#3f1a1a", flexShrink: 0 },
+  snapshotItem: { display: "flex", flexDirection: "column", gap: 4, flex: 1 },
+  snapshotLabel: { fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.14em", color: C.muted },
+  snapshotValue: { fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 500, color: C.text, letterSpacing: "-0.3px" },
+  snapshotArrow: { fontSize: 18, color: C.faint, flexShrink: 0 },
   progressPreview: {
-    height: 4, background: "#1e1212", borderRadius: 99, overflow: "hidden", marginBottom: 14,
+    height: 4, background: "rgba(255,255,255,0.10)", borderRadius: 99, overflow: "hidden", marginBottom: 6,
   },
   maxBtn: {
     position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-    background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)",
-    borderRadius: 5, color: "#4ade80", fontSize: 10, fontFamily: "'DM Mono', monospace",
+    background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.35)",
+    borderRadius: 5, color: C.green, fontSize: 10, fontFamily: "'DM Mono', monospace",
     padding: "3px 7px", cursor: "pointer", letterSpacing: "0.08em",
   },
   payoffNote: {
-    marginTop: 12, fontSize: 12, color: "#4ade80",
+    marginTop: 12, fontSize: 13, color: C.green,
     padding: "10px 14px",
-    background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)",
+    background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.3)",
     borderRadius: 8, lineHeight: 1.5,
   },
 };

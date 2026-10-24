@@ -1,24 +1,39 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "https://maadala.onrender.com/api/transactions";
+const API_BASE = "http://localhost:5000/api/transactions";
+
+// ─── Theme (shared with HomePage) ─────────────────────────────────────────────
+const C = {
+  bg:         "#07080d",
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.10)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  surface:    "rgba(255,255,255,0.03)",
+  accent:     "#34d399",
+  accentDark: "#0d9488",
+  teal:       "#2dd4bf",
+  amber:      "#fbbf24",
+  negative:   "#f87171",
+};
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-
 const TYPE_META = {
-  asset_create:            { label: "Asset Added",        color: "#818cf8", bg: "rgba(129,140,248,0.1)",  icon: "✦", sign: "+" },
-  asset_buy:               { label: "Buy",                color: "#4ade80", bg: "rgba(74,222,128,0.1)",   icon: "↑", sign: "+" },
-  asset_sell:              { label: "Sell",               color: "#f87171", bg: "rgba(248,113,113,0.1)",  icon: "↓", sign: "−" },
-  asset_value_update:      { label: "Value Updated",      color: "#fb923c", bg: "rgba(251,146,60,0.1)",   icon: "✎", sign: "~" },
-  liability_create:        { label: "Debt Added",         color: "#f87171", bg: "rgba(248,113,113,0.1)",  icon: "⊕", sign: "−" },
-  liability_payment:       { label: "Payment",            color: "#2dd4bf", bg: "rgba(45,212,191,0.1)",   icon: "↓", sign: "−" },
-  liability_balance_update:{ label: "Balance Updated",    color: "#fb923c", bg: "rgba(251,146,60,0.1)",   icon: "✎", sign: "~" },
+  asset_create:             { label: "Asset Added",     color: "#34d399", bg: "rgba(52,211,153,0.12)",  icon: "✦", sign: "+" },
+  asset_buy:                { label: "Buy",             color: "#34d399", bg: "rgba(52,211,153,0.12)",  icon: "↑", sign: "+" },
+  asset_sell:               { label: "Sell",            color: "#f87171", bg: "rgba(248,113,113,0.12)", icon: "↓", sign: "−" },
+  asset_value_update:       { label: "Value Updated",   color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  icon: "✎", sign: "~" },
+  liability_create:         { label: "Debt Added",      color: "#f87171", bg: "rgba(248,113,113,0.12)", icon: "⊕", sign: "−" },
+  liability_payment:        { label: "Payment",         color: "#2dd4bf", bg: "rgba(45,212,191,0.12)",  icon: "↓", sign: "−" },
+  liability_balance_update: { label: "Balance Updated", color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  icon: "✎", sign: "~" },
 };
 
 const ENTITY_FILTERS = ["all", "asset", "liability"];
-const TYPE_FILTERS   = ["all", ...Object.keys(TYPE_META)];
 
 const fmt = (val) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(val) || 0);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(Math.abs(val) || 0);
 
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -26,14 +41,12 @@ const fmtDate = (d) =>
 const fmtTime = (d) =>
   new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-const gainColor = (v) => (v > 0 ? "#4ade80" : v < 0 ? "#f87171" : "#64748b");
+const gainColor = (v) => (v > 0 ? C.accent : v < 0 ? C.negative : C.muted);
 
 // ─── Filter Bar ───────────────────────────────────────────────────────────────
-
 function FilterBar({ filters, onChange }) {
   return (
     <div style={fbStyles.wrap}>
-      {/* Entity filter */}
       <div style={fbStyles.group}>
         <span style={fbStyles.groupLabel}>TYPE</span>
         <div style={fbStyles.pills}>
@@ -49,7 +62,6 @@ function FilterBar({ filters, onChange }) {
         </div>
       </div>
 
-      {/* Date range */}
       <div style={fbStyles.group}>
         <span style={fbStyles.groupLabel}>FROM</span>
         <input
@@ -67,7 +79,6 @@ function FilterBar({ filters, onChange }) {
         />
       </div>
 
-      {/* Clear */}
       {(filters.entity_type !== "all" || filters.from || filters.to) && (
         <button
           style={fbStyles.clearBtn}
@@ -84,69 +95,62 @@ const fbStyles = {
   wrap: {
     display: "flex", alignItems: "center", flexWrap: "wrap", gap: 16,
     padding: "14px 18px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1e293b",
+    background: C.surface,
+    border: `1px solid ${C.border}`,
     borderRadius: 12, marginBottom: 16,
   },
   group: { display: "flex", alignItems: "center", gap: 8 },
-  groupLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#334155" },
+  groupLabel: { fontSize: 10.5, letterSpacing: "0.14em", color: C.muted },
   pills: { display: "flex", gap: 4 },
   pill: {
-    padding: "5px 12px", borderRadius: 20,
-    background: "transparent", border: "1px solid #1e293b",
-    color: "#475569", fontSize: 11, fontFamily: "'DM Mono', monospace",
+    padding: "5px 14px", borderRadius: 20,
+    background: "transparent", border: `1px solid ${C.border}`,
+    color: C.body, fontSize: 11.5, fontFamily: "'DM Mono', monospace",
     cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.15s",
   },
   pillActive: {
-    background: "rgba(99,102,241,0.12)",
-    borderColor: "rgba(99,102,241,0.35)",
-    color: "#818cf8",
+    background: "rgba(52,211,153,0.12)",
+    borderColor: "rgba(52,211,153,0.45)",
+    color: C.accent,
   },
   dateInput: {
     padding: "5px 10px",
-    background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b",
-    borderRadius: 8, color: "#94a3b8", fontSize: 11,
+    background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`,
+    borderRadius: 8, color: C.body, fontSize: 11.5,
     fontFamily: "'DM Mono', monospace", outline: "none",
+    colorScheme: "dark",
   },
   clearBtn: {
     padding: "5px 12px", borderRadius: 8,
-    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-    color: "#f87171", fontSize: 11, fontFamily: "'DM Mono', monospace",
+    background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)",
+    color: C.negative, fontSize: 11.5, fontFamily: "'DM Mono', monospace",
     cursor: "pointer", marginLeft: "auto",
   },
 };
 
 // ─── Transaction Row ──────────────────────────────────────────────────────────
-
 function TxRow({ tx, onDelete }) {
   const [hovered, setHovered]   = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const meta = TYPE_META[tx.type] || { label: tx.type, color: "#64748b", bg: "rgba(100,116,139,0.1)", icon: "·", sign: "" };
-
-  const isGain    = ["asset_buy", "asset_create"].includes(tx.type) ||
-                    (tx.type === "asset_value_update" && tx.amount > 0);
-  const isReduction = ["asset_sell","liability_payment","liability_balance_update"].includes(tx.type) ||
-                      (tx.type === "asset_value_update" && tx.amount < 0);
+  const meta = TYPE_META[tx.type] || { label: tx.type, color: C.muted, bg: "rgba(255,255,255,0.06)", icon: "·", sign: "" };
 
   return (
     <>
       <div
         style={{
           ...txStyles.row,
-          background: hovered ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.01)",
-          borderColor: expanded ? "#1e293b" : "transparent",
-          borderBottomColor: "#0f172a",
+          background: hovered ? "rgba(52,211,153,0.04)" : "rgba(255,255,255,0.01)",
+          borderColor: expanded ? C.border : "transparent",
+          borderBottomColor: C.borderSoft,
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => setExpanded((v) => !v)}
       >
-        {/* Icon */}
-        <div style={{ ...txStyles.iconCell, background: meta.bg, color: meta.color }}>
+        <div style={{ ...txStyles.iconCell, background: meta.bg, color: meta.color, border: `1px solid ${meta.color}40` }}>
           {meta.icon}
         </div>
 
-        {/* Name + entity */}
         <div style={txStyles.nameCell}>
           <div style={txStyles.entityName}>{tx.entity_name}</div>
           <div style={txStyles.typePill}>
@@ -155,45 +159,40 @@ function TxRow({ tx, onDelete }) {
           </div>
         </div>
 
-        {/* Amount */}
         <div style={txStyles.amountCell}>
           <span style={{
             ...txStyles.amount,
-            color: tx.type === "asset_sell" ? "#f87171"
-                 : tx.type === "liability_payment" ? "#2dd4bf"
-                 : tx.type === "asset_buy" || tx.type === "asset_create" ? "#4ade80"
-                 : "#94a3b8",
+            color: tx.type === "asset_sell" ? C.negative
+                 : tx.type === "liability_payment" ? C.teal
+                 : tx.type === "asset_buy" || tx.type === "asset_create" ? C.accent
+                 : C.body,
           }}>
             {meta.sign} {fmt(tx.amount)}
           </span>
-          {tx.value_after !== null && (
+          {tx.value_after !== null && tx.value_after !== undefined && (
             <span style={txStyles.valueAfter}>→ {fmt(tx.value_after)}</span>
           )}
         </div>
 
-        {/* Realized gain (sell only) */}
         {tx.realized_gain !== null && tx.realized_gain !== undefined && (
           <div style={txStyles.gainCell}>
-            <span style={{ fontSize: 10, color: "#334155", letterSpacing: "0.1em" }}>GAIN</span>
+            <span style={{ fontSize: 10.5, color: C.muted, letterSpacing: "0.1em" }}>GAIN</span>
             <span style={{ fontSize: 13, color: gainColor(tx.realized_gain), fontWeight: 500 }}>
               {tx.realized_gain >= 0 ? "+" : ""}{fmt(tx.realized_gain)}
             </span>
           </div>
         )}
 
-        {/* Date */}
         <div style={txStyles.dateCell}>
           <span style={txStyles.dateMain}>{fmtDate(tx.transaction_date)}</span>
           <span style={txStyles.dateTime}>{fmtTime(tx.transaction_date)}</span>
         </div>
 
-        {/* Expand chevron */}
-        <div style={{ ...txStyles.chevron, opacity: hovered ? 1 : 0.2, transform: expanded ? "rotate(180deg)" : "none" }}>
+        <div style={{ ...txStyles.chevron, opacity: hovered ? 1 : 0.5, transform: expanded ? "rotate(180deg)" : "none" }}>
           ⌄
         </div>
       </div>
 
-      {/* Expanded detail row */}
       {expanded && (
         <div style={txStyles.expandedRow}>
           <div style={txStyles.expandGrid}>
@@ -209,7 +208,7 @@ function TxRow({ tx, onDelete }) {
               <span style={txStyles.expandLabel}>AMOUNT</span>
               <span style={txStyles.expandValue}>{fmt(tx.amount)}</span>
             </div>
-            {tx.value_after !== null && (
+            {tx.value_after !== null && tx.value_after !== undefined && (
               <div style={txStyles.expandItem}>
                 <span style={txStyles.expandLabel}>VALUE AFTER</span>
                 <span style={txStyles.expandValue}>{fmt(tx.value_after)}</span>
@@ -252,7 +251,7 @@ const txStyles = {
     display: "flex", alignItems: "center", gap: 16,
     padding: "14px 18px",
     border: "1px solid transparent",
-    borderBottom: "1px solid #0f172a",
+    borderBottom: `1px solid ${C.borderSoft}`,
     cursor: "pointer",
     transition: "background 0.15s",
   },
@@ -262,37 +261,36 @@ const txStyles = {
     fontSize: 14, fontWeight: 600,
   },
   nameCell: { flex: 1, minWidth: 140 },
-  entityName: { fontSize: 14, color: "#cbd5e1", fontWeight: 500, marginBottom: 3 },
-  typePill: { display: "flex", alignItems: "center", gap: 5, fontSize: 11 },
+  entityName: { fontSize: 14, color: C.text, fontWeight: 500, marginBottom: 3 },
+  typePill: { display: "flex", alignItems: "center", gap: 5, fontSize: 11.5 },
   typeDot: { width: 5, height: 5, borderRadius: "50%", flexShrink: 0 },
   amountCell: { display: "flex", flexDirection: "column", alignItems: "flex-end", minWidth: 110 },
   amount: { fontSize: 15, fontWeight: 500, fontFamily: "'DM Mono', monospace", letterSpacing: "-0.3px" },
-  valueAfter: { fontSize: 11, color: "#334155", marginTop: 2 },
+  valueAfter: { fontSize: 11, color: C.muted, marginTop: 2 },
   gainCell: { display: "flex", flexDirection: "column", alignItems: "flex-end", minWidth: 90 },
   dateCell: { display: "flex", flexDirection: "column", alignItems: "flex-end", minWidth: 100 },
-  dateMain: { fontSize: 12, color: "#475569" },
-  dateTime: { fontSize: 10, color: "#334155", marginTop: 2 },
-  chevron: { fontSize: 18, color: "#334155", transition: "transform 0.2s, opacity 0.15s", lineHeight: 1 },
+  dateMain: { fontSize: 12, color: C.body },
+  dateTime: { fontSize: 10.5, color: C.muted, marginTop: 2 },
+  chevron: { fontSize: 18, color: C.muted, transition: "transform 0.2s, opacity 0.15s", lineHeight: 1 },
   expandedRow: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
     padding: "14px 18px 18px 70px",
-    background: "rgba(0,0,0,0.2)",
-    borderBottom: "1px solid #0f172a",
+    background: "rgba(52,211,153,0.03)",
+    borderBottom: `1px solid ${C.borderSoft}`,
   },
   expandGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px 32px", flex: 1 },
   expandItem: { display: "flex", flexDirection: "column", gap: 3 },
-  expandLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#334155" },
-  expandValue: { fontSize: 13, color: "#94a3b8", fontFamily: "'DM Mono', monospace" },
+  expandLabel: { fontSize: 10.5, letterSpacing: "0.14em", color: C.muted },
+  expandValue: { fontSize: 13, color: C.text, fontFamily: "'DM Mono', monospace" },
   deleteBtn: {
     padding: "6px 12px", borderRadius: 7, flexShrink: 0,
-    background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)",
-    color: "#f87171", fontSize: 11, fontFamily: "'DM Mono', monospace",
+    background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)",
+    color: C.negative, fontSize: 11.5, fontFamily: "'DM Mono', monospace",
     cursor: "pointer", alignSelf: "flex-end", marginLeft: 24,
   },
 };
 
 // ─── Delete Confirm Modal ─────────────────────────────────────────────────────
-
 function DeleteModal({ tx, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
   const meta = TYPE_META[tx.type] || {};
@@ -313,14 +311,14 @@ function DeleteModal({ tx, onClose, onDeleted }) {
     <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={modalStyles.box}>
         <div style={modalStyles.header}>
-          <div style={{ ...modalStyles.tag, color: "#ef4444" }}>DELETE RECORD</div>
+          <div style={{ ...modalStyles.tag, color: C.negative }}>DELETE RECORD</div>
           <h2 style={modalStyles.title}>Remove Transaction</h2>
         </div>
         <div style={modalStyles.body}>
           <p style={modalStyles.text}>
             This will permanently remove the{" "}
             <span style={{ color: meta.color }}>{meta.label}</span> transaction for{" "}
-            <span style={{ color: "#f1f5f9" }}>{tx.entity_name}</span> ({fmt(tx.amount)}).
+            <span style={{ color: C.text }}>{tx.entity_name}</span> ({fmt(tx.amount)}).
             The underlying asset/liability record is not affected.
           </p>
         </div>
@@ -337,34 +335,34 @@ function DeleteModal({ tx, onClose, onDeleted }) {
 
 const modalStyles = {
   overlay: {
-    position: "fixed", inset: 0, background: "rgba(2,6,23,0.9)",
-    backdropFilter: "blur(8px)", zIndex: 1000,
+    position: "fixed", inset: 0, background: "rgba(3,5,8,0.88)",
+    backdropFilter: "blur(10px)", zIndex: 1000,
     display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
   },
   box: {
     width: "100%", maxWidth: 440,
-    background: "linear-gradient(145deg,#0d1424,#0a1020)",
-    border: "1px solid #1e293b", borderRadius: 18,
-    boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
+    background: "#0a0c12",
+    border: "1px solid rgba(52,211,153,0.25)", borderRadius: 18,
+    boxShadow: "0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(52,211,153,0.06)",
     overflow: "hidden",
     fontFamily: "'DM Mono', monospace",
   },
-  header: { padding: "22px 24px 16px", borderBottom: "1px solid #1e293b" },
-  tag: { fontSize: 10, letterSpacing: "0.2em", marginBottom: 5 },
+  header: { padding: "22px 24px 16px", borderBottom: `1px solid ${C.border}` },
+  tag: { fontSize: 10.5, letterSpacing: "0.2em", marginBottom: 5 },
   title: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 22, fontWeight: 400, color: "#f1f5f9",
+    fontSize: 22, fontWeight: 400, color: C.text,
   },
   body: { padding: "18px 24px" },
-  text: { fontSize: 13, color: "#64748b", lineHeight: 1.7 },
+  text: { fontSize: 13, color: C.body, lineHeight: 1.7 },
   footer: {
     display: "flex", justifyContent: "flex-end", gap: 10,
-    padding: "14px 24px 20px", borderTop: "1px solid #1e293b",
+    padding: "14px 24px 20px", borderTop: `1px solid ${C.border}`,
   },
   cancelBtn: {
     padding: "9px 16px", background: "transparent",
-    border: "1px solid #1e293b", borderRadius: 9,
-    color: "#475569", fontSize: 12, fontFamily: "'DM Mono', monospace", cursor: "pointer",
+    border: "1px solid rgba(255,255,255,0.22)", borderRadius: 9,
+    color: C.text, fontSize: 12, fontFamily: "'DM Mono', monospace", cursor: "pointer",
   },
   deleteBtn: {
     padding: "9px 18px",
@@ -376,7 +374,6 @@ const modalStyles = {
 };
 
 // ─── Summary Strip ────────────────────────────────────────────────────────────
-
 function SummaryStrip({ summary }) {
   if (!summary) return null;
   const { typeBreakdown = [], totalCount = 0 } = summary;
@@ -389,22 +386,22 @@ function SummaryStrip({ summary }) {
     <div style={ssStyles.wrap}>
       <div style={ssStyles.item}>
         <span style={ssStyles.label}>TOTAL TRANSACTIONS</span>
-        <span style={ssStyles.val}>{totalCount}</span>
+        <span style={{ ...ssStyles.val, color: C.text }}>{totalCount}</span>
       </div>
       <div style={ssStyles.sep} />
       <div style={ssStyles.item}>
         <span style={ssStyles.label}>TOTAL BOUGHT</span>
-        <span style={{ ...ssStyles.val, color: "#4ade80" }}>{fmt(buys)}</span>
+        <span style={{ ...ssStyles.val, color: C.accent }}>{fmt(buys)}</span>
       </div>
       <div style={ssStyles.sep} />
       <div style={ssStyles.item}>
         <span style={ssStyles.label}>TOTAL SOLD</span>
-        <span style={{ ...ssStyles.val, color: "#f87171" }}>{fmt(sells)}</span>
+        <span style={{ ...ssStyles.val, color: C.negative }}>{fmt(sells)}</span>
       </div>
       <div style={ssStyles.sep} />
       <div style={ssStyles.item}>
         <span style={ssStyles.label}>DEBT PAYMENTS</span>
-        <span style={{ ...ssStyles.val, color: "#2dd4bf" }}>{fmt(pays)}</span>
+        <span style={{ ...ssStyles.val, color: C.teal }}>{fmt(pays)}</span>
       </div>
     </div>
   );
@@ -413,40 +410,31 @@ function SummaryStrip({ summary }) {
 const ssStyles = {
   wrap: {
     display: "flex", flexWrap: "wrap", gap: 0,
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1e293b", borderRadius: 12,
+    background: C.surface,
+    border: `1px solid ${C.border}`, borderRadius: 12,
     marginBottom: 16, overflow: "hidden",
   },
   item: {
     display: "flex", flexDirection: "column", gap: 4,
     padding: "14px 22px", flex: 1, minWidth: 130,
   },
-  sep: { width: 1, background: "#0f172a", alignSelf: "stretch" },
-  label: { fontSize: 10, letterSpacing: "0.15em", color: "#334155" },
-  val: { fontSize: 18, fontWeight: 500, fontFamily: "'DM Mono', monospace", color: "#94a3b8", letterSpacing: "-0.3px" },
+  sep: { width: 1, background: C.borderSoft, alignSelf: "stretch" },
+  label: { fontSize: 10.5, letterSpacing: "0.14em", color: C.muted },
+  val: { fontSize: 18, fontWeight: 500, fontFamily: "'DM Mono', monospace", letterSpacing: "-0.3px" },
 };
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
-
 function Pagination({ pagination, onPageChange }) {
   if (!pagination || pagination.pages <= 1) return null;
   const { page, pages } = pagination;
 
   return (
     <div style={pgStyles.wrap}>
-      <button
-        style={pgStyles.btn}
-        disabled={page <= 1}
-        onClick={() => onPageChange(page - 1)}
-      >← Prev</button>
+      <button style={pgStyles.btn} disabled={page <= 1} onClick={() => onPageChange(page - 1)}>← Prev</button>
       <span style={pgStyles.info}>
         Page {page} of {pages} · {pagination.total} records
       </span>
-      <button
-        style={pgStyles.btn}
-        disabled={page >= pages}
-        onClick={() => onPageChange(page + 1)}
-      >Next →</button>
+      <button style={pgStyles.btn} disabled={page >= pages} onClick={() => onPageChange(page + 1)}>Next →</button>
     </div>
   );
 }
@@ -455,15 +443,14 @@ const pgStyles = {
   wrap: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, paddingTop: 20 },
   btn: {
     padding: "8px 16px", borderRadius: 8,
-    background: "rgba(255,255,255,0.03)", border: "1px solid #1e293b",
-    color: "#475569", fontSize: 12, fontFamily: "'DM Mono', monospace",
+    background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.35)",
+    color: C.text, fontSize: 12, fontFamily: "'DM Mono', monospace",
     cursor: "pointer",
   },
-  info: { fontSize: 12, color: "#334155", fontFamily: "'DM Mono', monospace" },
+  info: { fontSize: 12, color: C.muted, fontFamily: "'DM Mono', monospace" },
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [pagination,   setPagination]   = useState(null);
@@ -518,7 +505,6 @@ export default function Transactions() {
   const handlePageChange = (newPage) =>
     setFilters((f) => ({ ...f, page: newPage }));
 
-  // Group transactions by date
   const grouped = transactions.reduce((acc, tx) => {
     const key = fmtDate(tx.transaction_date);
     if (!acc[key]) acc[key] = [];
@@ -528,7 +514,7 @@ export default function Transactions() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.grain} />
+      <div style={styles.glow} />
 
       <div style={styles.container}>
         {/* Header */}
@@ -545,23 +531,18 @@ export default function Transactions() {
           )}
         </div>
 
-        {/* Summary strip */}
         <SummaryStrip summary={summary} />
-
-        {/* Filters */}
         <FilterBar filters={filters} onChange={setFilters} />
 
-        {/* Divider */}
         <div style={styles.divider} />
 
-        {/* Transaction list */}
         {loading ? (
           <div style={styles.centerState}>
             <p style={styles.stateText}>Loading transactions…</p>
           </div>
         ) : error ? (
           <div style={styles.centerState}>
-            <p style={{ color: "#f87171", fontSize: 13 }}>{error}</p>
+            <p style={{ color: C.negative, fontSize: 13 }}>{error}</p>
           </div>
         ) : transactions.length === 0 ? (
           <div style={styles.centerState}>
@@ -574,7 +555,6 @@ export default function Transactions() {
         ) : (
           <>
             <div style={styles.tableWrap}>
-              {/* Table header */}
               <div style={styles.tableHead}>
                 <span style={{ width: 36 }} />
                 <span style={{ flex: 1 }}>ENTITY</span>
@@ -584,16 +564,11 @@ export default function Transactions() {
                 <span style={{ width: 24 }} />
               </div>
 
-              {/* Grouped rows */}
               {Object.entries(grouped).map(([date, txs]) => (
                 <div key={date}>
                   <div style={styles.dateGroup}>{date}</div>
                   {txs.map((tx) => (
-                    <TxRow
-                      key={tx._id}
-                      tx={tx}
-                      onDelete={setDeleteTx}
-                    />
+                    <TxRow key={tx._id} tx={tx} onDelete={setDeleteTx} />
                   ))}
                 </div>
               ))}
@@ -613,32 +588,39 @@ export default function Transactions() {
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(18px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.3); }
+        input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
+        button:focus-visible, input:focus-visible { outline: 2px solid ${C.accent}; outline-offset: 2px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #07080d; }
+        ::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 99px; }
       `}</style>
     </div>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(160deg, #070b14 0%, #0a0f1e 60%, #060912 100%)",
+    background: C.bg,
     fontFamily: "'DM Mono', monospace",
-    color: "#e2e8f0",
+    color: C.text,
     position: "relative",
+    overflowX: "hidden",
   },
-  grain: {
-    position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+  glow: {
+    position: "fixed", top: "-10%", left: "50%",
+    transform: "translateX(-50%)",
+    width: 800, height: 500, borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 65%)",
+    pointerEvents: "none", zIndex: 0,
   },
   container: {
     position: "relative", zIndex: 1,
@@ -650,49 +632,49 @@ const styles = {
     display: "flex", justifyContent: "space-between",
     alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 24,
   },
-  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: "#1e3a5f", marginBottom: 6 },
+  pageEyebrow: { fontSize: 11, letterSpacing: "0.2em", color: C.accent, marginBottom: 6 },
   pageTitle: {
     fontFamily: "'DM Serif Display', serif",
-    fontSize: 52, fontWeight: 400, color: "#f0f9ff",
+    fontSize: 52, fontWeight: 400, color: C.text,
     lineHeight: 1, letterSpacing: "-1px",
   },
   totalBadge: {
     display: "flex", flexDirection: "column", alignItems: "flex-end",
     padding: "10px 16px",
-    background: "rgba(99,102,241,0.06)",
-    border: "1px solid rgba(99,102,241,0.15)",
+    background: "rgba(52,211,153,0.08)",
+    border: "1px solid rgba(52,211,153,0.3)",
     borderRadius: 10,
   },
-  totalLabel: { fontSize: 10, letterSpacing: "0.15em", color: "#4338ca", marginBottom: 3 },
-  totalValue: { fontSize: 18, fontWeight: 500, color: "#818cf8", letterSpacing: "-0.3px" },
+  totalLabel: { fontSize: 10.5, letterSpacing: "0.14em", color: C.muted, marginBottom: 3 },
+  totalValue: { fontSize: 18, fontWeight: 500, color: C.accent, letterSpacing: "-0.3px" },
   divider: {
     height: 1,
-    background: "linear-gradient(90deg, transparent, #0f172a 30%, #0f172a 70%, transparent)",
-    marginBottom: 0,
+    background: `linear-gradient(90deg, transparent, ${C.border} 30%, ${C.border} 70%, transparent)`,
+    marginBottom: 16,
   },
   tableWrap: {
-    background: "rgba(255,255,255,0.015)",
-    border: "1px solid #0f172a",
+    background: "rgba(255,255,255,0.02)",
+    border: `1px solid ${C.border}`,
     borderRadius: 14, overflow: "hidden",
   },
   tableHead: {
     display: "flex", alignItems: "center", gap: 16,
     padding: "10px 18px",
-    background: "rgba(0,0,0,0.3)",
-    borderBottom: "1px solid #0f172a",
-    fontSize: 10, letterSpacing: "0.15em", color: "#1e293b",
+    background: "rgba(0,0,0,0.35)",
+    borderBottom: `1px solid ${C.borderSoft}`,
+    fontSize: 10.5, letterSpacing: "0.14em", color: C.muted,
   },
   dateGroup: {
     padding: "10px 18px 6px",
-    fontSize: 10, letterSpacing: "0.15em", color: "#1e3a5f",
-    background: "rgba(0,0,0,0.15)",
-    borderBottom: "1px solid #0a0f1a",
+    fontSize: 10.5, letterSpacing: "0.14em", color: C.accent,
+    background: "rgba(52,211,153,0.05)",
+    borderBottom: `1px solid ${C.borderSoft}`,
   },
   centerState: {
     display: "flex", flexDirection: "column", alignItems: "center",
     justifyContent: "center", paddingTop: 80, gap: 10, textAlign: "center",
   },
-  emptyIcon: { fontSize: 44, color: "#0f172a", lineHeight: 1, marginBottom: 8 },
-  stateTitle: { fontSize: 20, fontFamily: "'DM Serif Display', serif", color: "#1e3a5f" },
-  stateText: { fontSize: 13, color: "#1e293b", maxWidth: 300, lineHeight: 1.6 },
+  emptyIcon: { fontSize: 44, color: C.accent, opacity: 0.5, lineHeight: 1, marginBottom: 8 },
+  stateTitle: { fontSize: 20, fontFamily: "'DM Serif Display', serif", color: C.text },
+  stateText: { fontSize: 13, color: C.muted, maxWidth: 300, lineHeight: 1.6 },
 };

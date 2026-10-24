@@ -1,9 +1,31 @@
 import { useState } from "react";
 
-const API = "https://maadala.onrender.com/api/auth";
+const API = "http://localhost:5000/api/auth";
+
+// ─── Theme (shared with HomePage / Transactions / Reports) ────────────────────
+const C = {
+  bg:         "#07080d",
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.10)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  surface:    "rgba(255,255,255,0.03)",
+  accent:     "#34d399",
+  accentDark: "#0d9488",
+  teal:       "#2dd4bf",
+  amber:      "#fbbf24",
+  negative:   "#f87171",
+};
+const TOKEN_KEYS = ["Maadalla_token", "vaultfolio_token", "maadalla_token", "token"];
 
 function getToken() {
-  return localStorage.getItem("vaultfolio_token") || "";
+  for (const k of TOKEN_KEYS) {
+    const v = localStorage.getItem(k);
+    if (v) return v.replace(/^"|"$/g, "");
+  }
+  return "";
 }
 
 function getInitials(name = "") {
@@ -19,17 +41,17 @@ function Toast({ msg, type }) {
       position: "fixed", bottom: 32, right: 32, zIndex: 9999,
       display: "flex", alignItems: "center", gap: 10,
       padding: "12px 20px",
-      background: ok ? "rgba(34,197,94,0.08)" : "rgba(248,113,113,0.08)",
-      border: `1px solid ${ok ? "rgba(34,197,94,0.25)" : "rgba(248,113,113,0.25)"}`,
+      background: ok ? "rgba(52,211,153,0.10)" : "rgba(248,113,113,0.10)",
+      border: `1px solid ${ok ? "rgba(52,211,153,0.4)" : "rgba(248,113,113,0.4)"}`,
       borderRadius: 12,
-      boxShadow: `0 12px 40px ${ok ? "rgba(34,197,94,0.08)" : "rgba(248,113,113,0.08)"}`,
+      boxShadow: `0 12px 40px ${ok ? "rgba(52,211,153,0.12)" : "rgba(248,113,113,0.12)"}`,
       backdropFilter: "blur(12px)",
       animation: "toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
       maxWidth: 340,
     }}>
-      <span style={{ fontSize: 15 }}>{ok ? "✓" : "⚠"}</span>
+      <span style={{ fontSize: 15, color: ok ? C.accent : C.negative }}>{ok ? "✓" : "⚠"}</span>
       <span style={{
-        fontSize: 12, color: ok ? "#4ade80" : "#f87171",
+        fontSize: 12, color: ok ? C.accent : C.negative,
         fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em",
       }}>{msg}</span>
     </div>
@@ -45,8 +67,8 @@ function Field({ label, type = "text", value, onChange, placeholder, error, disa
   return (
     <div style={{ marginBottom: 18 }}>
       <div style={{
-        fontSize: 9, fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.18em", color: error ? "#f87171" : focus ? "#60a5fa" : "#253347",
+        fontSize: 10.5, fontFamily: "'DM Mono', monospace",
+        letterSpacing: "0.14em", color: error ? C.negative : focus ? C.accent : C.muted,
         marginBottom: 7, transition: "color 0.15s",
       }}>{label}</div>
       <div style={{ position: "relative" }}>
@@ -61,21 +83,21 @@ function Field({ label, type = "text", value, onChange, placeholder, error, disa
           style={{
             width: "100%",
             padding: type === "password" ? "12px 44px 12px 14px" : "12px 14px",
-            background: disabled ? "rgba(255,255,255,0.01)" : focus ? "rgba(96,165,250,0.03)" : "rgba(255,255,255,0.02)",
-            border: `1px solid ${error ? "rgba(248,113,113,0.5)" : focus ? "rgba(96,165,250,0.4)" : "#0d1924"}`,
+            background: disabled ? "rgba(255,255,255,0.01)" : focus ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.03)",
+            border: `1px solid ${error ? "rgba(248,113,113,0.6)" : focus ? "rgba(52,211,153,0.55)" : C.border}`,
             borderRadius: 10,
-            color: disabled ? "#1e2d3d" : "#dde8f5",
+            color: disabled ? C.faint : C.text,
             fontSize: 13, fontFamily: "'DM Mono', monospace",
             outline: "none", transition: "all 0.18s",
-            boxShadow: focus && !disabled ? "0 0 0 3px rgba(96,165,250,0.06)" : "none",
+            boxShadow: focus && !disabled ? "0 0 0 3px rgba(52,211,153,0.10)" : "none",
             cursor: disabled ? "not-allowed" : "text",
           }}
         />
         {type === "password" && (
-          <button type="button" onClick={() => setShow(s => !s)} style={{
+          <button type="button" onClick={() => setShow(s => !s)} aria-label={show ? "Hide password" : "Show password"} style={{
             position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)",
             background: "none", border: "none", cursor: "pointer",
-            color: show ? "#60a5fa" : "#253347", padding: 2,
+            color: show ? C.accent : C.muted, padding: 2,
             display: "flex", transition: "color 0.15s",
           }}>
             {show
@@ -85,7 +107,7 @@ function Field({ label, type = "text", value, onChange, placeholder, error, disa
           </button>
         )}
       </div>
-      {error && <p style={{ fontSize: 11, color: "#f87171", fontFamily: "'DM Mono', monospace", marginTop: 5 }}>{error}</p>}
+      {error && <p style={{ fontSize: 11, color: C.negative, fontFamily: "'DM Mono', monospace", marginTop: 5 }}>{error}</p>}
     </div>
   );
 }
@@ -105,13 +127,13 @@ function StrengthBar({ password }) {
       <div style={{ display: "flex", gap: 4, marginBottom: 5 }}>
         {[1,2,3,4].map(i => (
           <div key={i} style={{
-            flex: 1, height: 2.5, borderRadius: 99,
-            background: i <= s ? colors[s] : "#0a1422",
+            flex: 1, height: 3, borderRadius: 99,
+            background: i <= s ? colors[s] : "rgba(255,255,255,0.08)",
             transition: "background 0.3s",
           }}/>
         ))}
       </div>
-      <span style={{ fontSize: 9, color: colors[s], fontFamily: "'DM Mono', monospace", letterSpacing: "0.12em" }}>
+      <span style={{ fontSize: 10, color: colors[s], fontFamily: "'DM Mono', monospace", letterSpacing: "0.12em" }}>
         {labels[s]}
       </span>
     </div>
@@ -119,40 +141,41 @@ function StrengthBar({ password }) {
 }
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
-function Section({ children, delay = 0 }) {
+function Section({ children, delay = 0, danger = false }) {
   return (
     <div style={{
-      background: "rgba(255,255,255,0.017)",
-      border: "1px solid #0b1520",
+      background: C.surface,
+      border: `1px solid ${danger ? "rgba(248,113,113,0.22)" : C.border}`,
       borderRadius: 18, overflow: "hidden",
       animation: `fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both`,
       animationDelay: `${delay}ms`,
       position: "relative",
     }}>
-      {/* Shimmer top border */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 1,
-        background: "linear-gradient(90deg, transparent 0%, rgba(96,165,250,0.2) 40%, rgba(96,165,250,0.08) 60%, transparent 100%)",
+        background: danger
+          ? "linear-gradient(90deg, transparent 0%, rgba(248,113,113,0.45) 50%, transparent 100%)"
+          : "linear-gradient(90deg, transparent 0%, rgba(52,211,153,0.5) 50%, transparent 100%)",
       }}/>
       {children}
     </div>
   );
 }
 
-function SectionHead({ eyebrow, title, sub }) {
+function SectionHead({ eyebrow, title, sub, danger = false }) {
   return (
     <div style={{ padding: "26px 28px 0" }}>
       <div style={{
-        fontSize: 9, fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.2em", color: "#1e2d3d", marginBottom: 6,
+        fontSize: 10.5, fontFamily: "'DM Mono', monospace",
+        letterSpacing: "0.2em", color: danger ? C.negative : C.accent, marginBottom: 6,
       }}>{eyebrow}</div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: sub ? 4 : 20 }}>
         <h2 style={{
           fontFamily: "'DM Serif Display', serif",
-          fontSize: 22, color: "#dde8f5", letterSpacing: "-0.4px",
+          fontSize: 22, color: C.text, letterSpacing: "-0.4px", fontWeight: 400,
         }}>{title}</h2>
       </div>
-      {sub && <p style={{ fontSize: 12, color: "#1a2838", fontWeight: 300, marginBottom: 20, lineHeight: 1.65 }}>{sub}</p>}
+      {sub && <p style={{ fontSize: 13, color: C.muted, fontWeight: 400, marginBottom: 20, lineHeight: 1.65 }}>{sub}</p>}
     </div>
   );
 }
@@ -166,30 +189,29 @@ function AvatarHero({ name, email }) {
   const initials = getInitials(name);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 26, padding: "0 28px" }}>
-      {/* Avatar ring */}
       <div style={{ position: "relative", flexShrink: 0 }}>
         <div style={{
           position: "absolute", inset: -3, borderRadius: "50%",
-          background: "conic-gradient(from 0deg, #34d399, #60a5fa, #a78bfa, #34d399)",
+          background: `conic-gradient(from 0deg, ${C.accent}, ${C.accentDark}, ${C.teal}, ${C.accent})`,
           animation: "spin 6s linear infinite",
         }}/>
         <div style={{
           position: "relative", width: 64, height: 64, borderRadius: "50%",
-          background: "linear-gradient(135deg, #1e3a52, #0d1f30)",
-          border: "2px solid #07080d",
+          background: "linear-gradient(135deg, #0f2a22, #07110e)",
+          border: `2px solid ${C.bg}`,
           display: "flex", alignItems: "center", justifyContent: "center",
           fontFamily: "'DM Serif Display', serif",
-          fontSize: 22, color: "#a8d5f0", letterSpacing: "1px",
+          fontSize: 22, color: C.accent, letterSpacing: "1px",
         }}>{initials}</div>
       </div>
       <div>
         <div style={{
           fontFamily: "'DM Serif Display', serif",
-          fontSize: 20, color: "#dde8f5", letterSpacing: "-0.4px", marginBottom: 4,
+          fontSize: 20, color: C.text, letterSpacing: "-0.4px", marginBottom: 4,
         }}>{name || "Your Name"}</div>
         <div style={{
-          fontSize: 11, color: "#1e2d3d",
-          fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em",
+          fontSize: 12, color: C.muted,
+          fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em",
         }}>{email || "—"}</div>
       </div>
     </div>
@@ -202,6 +224,8 @@ function AccountInfo({ user, onUserUpdate, toast }) {
   const [email,   setEmail]   = useState(user?.email || "");
   const [errors,  setErrors]  = useState({});
   const [loading, setLoading] = useState(false);
+  console.log("TOKEN SENT:", JSON.stringify(getToken()).slice(0, 40));
+console.log("ALL STORAGE KEYS:", Object.keys(localStorage));
 
   const dirty = name !== (user?.name || "") || email !== (user?.email || "");
 
@@ -236,7 +260,7 @@ function AccountInfo({ user, onUserUpdate, toast }) {
       <SectionHead eyebrow="01 — ACCOUNT" title="Personal Information" />
       <AvatarHero name={name} email={email} />
       <SectionBody>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="profile-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <Field label="FULL NAME"      value={name}  onChange={setName}  placeholder="Your full name"   error={errors.name} />
           <Field label="EMAIL ADDRESS"  type="email" value={email} onChange={setEmail} placeholder="you@example.com" error={errors.email} />
         </div>
@@ -245,7 +269,7 @@ function AccountInfo({ user, onUserUpdate, toast }) {
             onClick={save}
             disabled={!dirty || loading}
             loading={loading}
-            color="#60a5fa"
+            color={C.accent}
             label="Save changes"
           />
         </div>
@@ -294,7 +318,7 @@ function ChangePassword({ toast }) {
       <SectionHead eyebrow="02 — SECURITY" title="Change Password" />
       <SectionBody>
         <Field label="CURRENT PASSWORD" type="password" value={cur} onChange={setCur} placeholder="Current password" error={errors.cur} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="profile-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div>
             <Field label="NEW PASSWORD" type="password" value={next} onChange={setNext} placeholder="Min. 8 characters" error={errors.next} />
             <StrengthBar password={next} />
@@ -302,7 +326,7 @@ function ChangePassword({ toast }) {
           <Field label="CONFIRM NEW PASSWORD" type="password" value={confirm} onChange={setConfirm} placeholder="Repeat new password" error={errors.confirm} />
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Btn onClick={save} loading={loading} color="#a78bfa" label="Update password" />
+          <Btn onClick={save} loading={loading} color={C.teal} label="Update password" />
         </div>
       </SectionBody>
     </Section>
@@ -321,7 +345,7 @@ function StatsStrip({ user }) {
     { label: "ACCOUNT ID",   val: shortId },
   ];
   return (
-    <div style={{
+    <div className="profile-stats" style={{
       display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10,
       animation: "fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both",
       animationDelay: "10ms",
@@ -330,14 +354,14 @@ function StatsStrip({ user }) {
       {items.map((item, i) => (
         <div key={i} style={{
           padding: "14px 18px",
-          background: "rgba(255,255,255,0.015)",
-          border: "1px solid #0b1520",
+          background: C.surface,
+          border: `1px solid ${C.border}`,
           borderRadius: 14,
         }}>
-          <div style={{ fontSize: 8, letterSpacing: "0.2em", color: "#1a2838", fontFamily: "'DM Mono', monospace", marginBottom: 7 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.16em", color: C.muted, fontFamily: "'DM Mono', monospace", marginBottom: 7 }}>
             {item.label}
           </div>
-          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#7ba7cc", letterSpacing: "-0.3px" }}>
+          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: C.accent, letterSpacing: "-0.3px" }}>
             {item.val}
           </div>
         </div>
@@ -364,8 +388,9 @@ function DangerZone({ onLogout, toast }) {
         const d = await res.json();
         throw new Error(d.message || "Delete failed");
       }
-      localStorage.removeItem("vaultfolio_token");
-      onLogout?.();
+TOKEN_KEYS.forEach((k) => localStorage.removeItem(k));
+localStorage.removeItem("user");
+localStorage.removeItem("Maadalla_active");      onLogout?.();
     } catch (err) {
       toast(err.message, "error");
       setLoading(false);
@@ -373,10 +398,11 @@ function DangerZone({ onLogout, toast }) {
   };
 
   return (
-    <Section delay={200}>
+    <Section delay={200} danger>
       <SectionHead
         eyebrow="03 — DANGER ZONE"
         title="Delete Account"
+        danger
         sub="Permanently erase your account and all portfolio data — assets, liabilities, transactions. This cannot be undone."
       />
       <SectionBody>
@@ -385,27 +411,27 @@ function DangerZone({ onLogout, toast }) {
             onClick={() => setOpen(true)}
             style={{
               padding: "10px 22px",
-              background: "rgba(248,113,113,0.06)",
-              border: "1px solid rgba(248,113,113,0.18)",
-              borderRadius: 10, color: "#f87171",
+              background: "rgba(248,113,113,0.08)",
+              border: "1px solid rgba(248,113,113,0.35)",
+              borderRadius: 10, color: C.negative,
               fontSize: 12, fontFamily: "'DM Mono', monospace",
               letterSpacing: "0.08em", cursor: "pointer", transition: "all 0.18s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,113,113,0.12)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.35)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(248,113,113,0.06)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.18)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,113,113,0.16)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.6)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(248,113,113,0.08)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.35)"; }}
           >
             Delete my account
           </button>
         ) : (
           <div style={{
             padding: 18,
-            background: "rgba(248,113,113,0.03)",
-            border: "1px solid rgba(248,113,113,0.12)",
+            background: "rgba(248,113,113,0.05)",
+            border: "1px solid rgba(248,113,113,0.25)",
             borderRadius: 12,
             animation: "fadeUp 0.25s ease both",
           }}>
-            <p style={{ fontSize: 11, color: "#8b3333", fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em", marginBottom: 12 }}>
-              Type <span style={{ color: "#f87171" }}>DELETE</span> to confirm permanently deleting your account.
+            <p style={{ fontSize: 12, color: C.body, fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em", marginBottom: 12 }}>
+              Type <span style={{ color: C.negative }}>DELETE</span> to confirm permanently deleting your account.
             </p>
             <input
               value={text}
@@ -413,9 +439,9 @@ function DangerZone({ onLogout, toast }) {
               placeholder="DELETE"
               style={{
                 width: "100%", padding: "10px 14px", marginBottom: 12,
-                background: "rgba(248,113,113,0.04)",
-                border: "1px solid rgba(248,113,113,0.2)",
-                borderRadius: 9, color: "#f87171",
+                background: "rgba(248,113,113,0.05)",
+                border: "1px solid rgba(248,113,113,0.35)",
+                borderRadius: 9, color: C.negative,
                 fontSize: 13, fontFamily: "'DM Mono', monospace",
                 letterSpacing: "0.15em", outline: "none",
               }}
@@ -426,9 +452,9 @@ function DangerZone({ onLogout, toast }) {
                 disabled={text !== "DELETE" || loading}
                 style={{
                   padding: "9px 22px",
-                  background: text === "DELETE" && !loading ? "#f87171" : "rgba(248,113,113,0.08)",
+                  background: text === "DELETE" && !loading ? C.negative : "rgba(248,113,113,0.10)",
                   border: "none", borderRadius: 9,
-                  color: text === "DELETE" && !loading ? "#1a0505" : "#4a1515",
+                  color: text === "DELETE" && !loading ? "#1a0505" : "rgba(248,113,113,0.5)",
                   fontSize: 12, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em",
                   fontWeight: 600, cursor: text !== "DELETE" || loading ? "not-allowed" : "pointer",
                   transition: "all 0.18s",
@@ -438,12 +464,12 @@ function DangerZone({ onLogout, toast }) {
                 onClick={() => { setOpen(false); setText(""); }}
                 style={{
                   padding: "9px 20px", background: "transparent",
-                  border: "1px solid #0d1924", borderRadius: 9,
-                  color: "#253347", fontSize: 12, fontFamily: "'DM Mono', monospace",
+                  border: "1px solid rgba(255,255,255,0.22)", borderRadius: 9,
+                  color: C.text, fontSize: 12, fontFamily: "'DM Mono', monospace",
                   letterSpacing: "0.07em", cursor: "pointer", transition: "all 0.18s",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#253347"; e.currentTarget.style.color = "#7ba7cc"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#0d1924"; e.currentTarget.style.color = "#253347"; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.color = C.text; }}
               >Cancel</button>
             </div>
           </div>
@@ -467,17 +493,17 @@ function Btn({ onClick, disabled, loading, color, label }) {
         padding: "10px 26px",
         background: active
           ? hover
-            ? `linear-gradient(135deg, ${color}dd, ${color}aa)`
-            : `linear-gradient(135deg, ${color}, ${color}bb)`
-          : `${color}18`,
-        border: active ? "none" : `1px solid ${color}22`,
+            ? `linear-gradient(135deg, ${color}dd, ${C.accentDark}dd)`
+            : `linear-gradient(135deg, ${color}, ${C.accentDark})`
+          : `${color}14`,
+        border: active ? "none" : `1px solid ${color}33`,
         borderRadius: 10,
-        color: active ? "#03050a" : `${color}44`,
+        color: active ? "#041009" : `${color}80`,
         fontSize: 12, fontFamily: "'DM Mono', monospace",
         letterSpacing: "0.08em", fontWeight: 600,
         cursor: active ? "pointer" : "not-allowed",
         transition: "all 0.18s",
-        boxShadow: active ? `0 0 24px ${color}28` : "none",
+        boxShadow: active ? `0 0 28px ${color}33` : "none",
         transform: active && hover ? "translateY(-1px)" : "none",
       }}
     >
@@ -500,14 +526,15 @@ export default function Profile({ user, onUserUpdate, onLogout }) {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#07080d",
+      background: C.bg,
       padding: "52px 52px 100px",
       fontFamily: "'DM Sans', sans-serif",
+      color: C.text,
       position: "relative",
       overflow: "hidden",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         @keyframes fadeUp {
@@ -523,66 +550,72 @@ export default function Profile({ user, onUserUpdate, onLogout }) {
           to   { transform: rotate(360deg); }
         }
 
-        input::placeholder { color: #10202e; }
+        input::placeholder { color: rgba(255,255,255,0.30); }
         input:-webkit-autofill {
           -webkit-box-shadow: 0 0 0 100px #07080d inset !important;
-          -webkit-text-fill-color: #dde8f5 !important;
+          -webkit-text-fill-color: #ffffff !important;
         }
-        ::-webkit-scrollbar { width: 4px; }
+        button:focus-visible { outline: 2px solid ${C.accent}; outline-offset: 2px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #07080d; }
-        ::-webkit-scrollbar-thumb { background: #0d1924; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 99px; }
         button { font-family: inherit; }
+
+        @media (max-width: 640px) {
+          .profile-pad   { padding: 36px 20px 80px !important; }
+          .profile-grid  { grid-template-columns: 1fr !important; }
+          .profile-stats { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
-      {/* Background grid */}
+      {/* Background grid (same as home hero) */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
         backgroundImage: `
-          linear-gradient(rgba(96,165,250,0.018) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(96,165,250,0.018) 1px, transparent 1px)
+          linear-gradient(rgba(52,211,153,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(52,211,153,0.035) 1px, transparent 1px)
         `,
         backgroundSize: "52px 52px",
-        maskImage: "radial-gradient(ellipse 60% 40% at 50% 0%, black 0%, transparent 100%)",
+        maskImage: "radial-gradient(ellipse 70% 50% at 50% 0%, black 0%, transparent 100%)",
+        WebkitMaskImage: "radial-gradient(ellipse 70% 50% at 50% 0%, black 0%, transparent 100%)",
       }}/>
 
       {/* Ambient glow */}
       <div style={{
-        position: "fixed", top: -120, left: "30%",
-        width: 500, height: 500, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 65%)",
+        position: "fixed", top: -140, left: "50%", transform: "translateX(-50%)",
+        width: 800, height: 500, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 65%)",
         pointerEvents: "none", zIndex: 0,
       }}/>
 
-      <div style={{ maxWidth: 800, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div className="profile-pad" style={{ maxWidth: 800, margin: "0 auto", position: "relative", zIndex: 1 }}>
 
         {/* ── Header ── */}
         <div style={{ marginBottom: 38, animation: "fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both" }}>
           <div style={{
-            fontSize: 9, letterSpacing: "0.22em", color: "#1a2838",
+            fontSize: 11, letterSpacing: "0.2em", color: C.accent,
             fontFamily: "'DM Mono', monospace", marginBottom: 10,
           }}>SETTINGS · PROFILE</div>
 
           <h1 style={{
             fontFamily: "'DM Serif Display', serif",
-            fontSize: 48, color: "#dde8f5",
+            fontSize: 48, color: C.text, fontWeight: 400,
             letterSpacing: "-2px", lineHeight: 1,
             marginBottom: 10,
           }}>
             {user?.name
-              ? <>{user.name.split(" ")[0]}<em style={{ fontStyle: "italic", color: "#3b6ea8" }}>'s profile.</em></>
-              : <>Your <em style={{ fontStyle: "italic", color: "#3b6ea8" }}>account.</em></>
+              ? <>{user.name.split(" ")[0]}<span style={gradText}>'s profile.</span></>
+              : <>Your <span style={gradText}>account.</span></>
             }
           </h1>
 
-          <p style={{ fontSize: 13, color: "#1a2838", fontWeight: 300, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: C.body, fontWeight: 400, lineHeight: 1.6 }}>
             {user?.email || "Manage your identity, security, and account settings."}
           </p>
         </div>
 
-        {/* ── Stats ── */}
         <StatsStrip user={user} />
 
-        {/* ── Sections ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <AccountInfo user={user} onUserUpdate={onUserUpdate} toast={showToast} />
           <ChangePassword toast={showToast} />
@@ -595,3 +628,10 @@ export default function Profile({ user, onUserUpdate, onLogout }) {
     </div>
   );
 }
+
+const gradText = {
+  fontStyle: "italic",
+  background: "linear-gradient(120deg, #34d399 0%, #2dd4bf 45%, #818cf8 100%)",
+  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+};

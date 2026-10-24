@@ -1,8 +1,23 @@
 import { useState, useEffect } from "react";
 
-const ASSETS_API      = "https://maadala.onrender.com/api/assets";
-const LIABILITIES_API = "https://maadala.onrender.com/api/liabilities";
-const TRANSACTIONS_API = "https://maadala.onrender.com/api/transactions";
+const ASSETS_API = "http://localhost:5000/api/assets";
+const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+const TRANSACTIONS_API = "http://localhost:5000/api/transactions";
+
+// ─── Theme (shared with HomePage / AuthPage) ──────────────────────────────────
+const C = {
+  text:       "#ffffff",
+  body:       "rgba(255,255,255,0.82)",
+  muted:      "rgba(255,255,255,0.62)",
+  faint:      "rgba(255,255,255,0.40)",
+  border:     "rgba(255,255,255,0.10)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  accent:     "#34d399",
+  accentDark: "#0d9488",
+  negative:   "#f87171",
+  amber:      "#fbbf24",
+  track:      "rgba(255,255,255,0.10)",
+};
 
 const NAV_ITEMS = [
   {
@@ -63,14 +78,14 @@ const NAV_ITEMS = [
 
 function fmt(n) {
   const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${n < 0 ? "-" : ""}$${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000)     return `${n < 0 ? "-" : ""}$${(abs / 1_000).toFixed(1)}K`;
+  if (abs >= 1_000_000) return `${n < 0 ? "-" : ""}₹{(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)     return `${n < 0 ? "-" : ""}₹${(abs / 1_000).toFixed(1)}K`;
   return `${n < 0 ? "-$" : "$"}${abs.toLocaleString()}`;
 }
 
 function fmtFull(n) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency", currency: "USD", maximumFractionDigits: 0,
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 0,
   }).format(n || 0);
 }
 
@@ -92,7 +107,7 @@ function DonutChart({ assetVal, liabilityVal, animate }) {
   if (total === 0) {
     return (
       <svg width="108" height="108" viewBox="0 0 108 108">
-        <circle cx="54" cy="54" r="38" fill="none" stroke="#1e2433" strokeWidth="13" />
+        <circle cx="54" cy="54" r="38" fill="none" stroke={C.track} strokeWidth="13" />
       </svg>
     );
   }
@@ -106,10 +121,10 @@ function DonutChart({ assetVal, liabilityVal, animate }) {
 
   return (
     <svg width="108" height="108" viewBox="0 0 108 108">
-      <circle cx="54" cy="54" r={r} fill="none" stroke="#1a2030" strokeWidth="13" />
+      <circle cx="54" cy="54" r={r} fill="none" stroke={C.track} strokeWidth="13" />
       <circle
         cx="54" cy="54" r={r} fill="none"
-        stroke="#34d399" strokeWidth="13"
+        stroke={C.accent} strokeWidth="13"
         strokeDasharray={`${assetLen} ${circumference}`}
         strokeDashoffset={0}
         strokeLinecap="round"
@@ -120,7 +135,7 @@ function DonutChart({ assetVal, liabilityVal, animate }) {
       />
       <circle
         cx="54" cy="54" r={r} fill="none"
-        stroke="#f87171" strokeWidth="13"
+        stroke={C.negative} strokeWidth="13"
         strokeDasharray={`${liabLen} ${circumference}`}
         strokeDashoffset={liabOffset}
         strokeLinecap="round"
@@ -141,7 +156,7 @@ function Skeleton({ w = "100%", h = 14, r = 6, mb = 0 }) {
   return (
     <div style={{
       width: w, height: h, borderRadius: r,
-      background: "linear-gradient(90deg,#1a2030 25%,#222b40 50%,#1a2030 75%)",
+      background: "linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.11) 50%, rgba(255,255,255,0.05) 75%)",
       backgroundSize: "200% 100%",
       animation: "shimmer 1.4s infinite linear",
       marginBottom: mb,
@@ -196,7 +211,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
   const assetsPct    = totalAssets + totalLiab > 0
     ? Math.round((totalAssets / (totalAssets + totalLiab)) * 100) : 0;
   const health       = assetsPct >= 70 ? "healthy" : assetsPct >= 50 ? "fair" : "review";
-  const healthColor  = assetsPct >= 70 ? "#34d399" : assetsPct >= 50 ? "#fbbf24" : "#f87171";
+  const healthColor  = assetsPct >= 70 ? C.accent : assetsPct >= 50 ? C.amber : C.negative;
   const totalInvested = data.assets.reduce(
     (s, a) => s + (parseFloat(a.invested_value) || 0), 0
   );
@@ -211,7 +226,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
         @keyframes shimmer {
           0%   { background-position: 200% 0; }
@@ -228,11 +243,12 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           width: 260px;
           max-height: 100vh;
           height: 100vh;
-          background: #0d1117;
+          background: linear-gradient(160deg, #0a121a 0%, #060b11 100%);
           display: flex;
           flex-direction: column;
           font-family: 'DM Sans', sans-serif;
-          border-right: 1px solid #1a2030;
+          color: ${C.text};
+          border-right: 1px solid ${C.borderSoft};
           overflow: hidden;
           position: fixed;
           top: 0; left: 0;
@@ -242,30 +258,31 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           content: '';
           position: absolute;
           top: -60px; right: -60px;
-          width: 180px; height: 180px;
+          width: 200px; height: 200px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(52,211,153,0.10) 0%, transparent 70%);
           pointer-events: none;
         }
 
         .top-section {
           padding: 22px 16px 18px;
-          border-bottom: 1px solid #1a2030;
+          border-bottom: 1px solid ${C.borderSoft};
           animation: fadeSlideIn 0.4s ease both;
+          position: relative;
         }
         .portfolio-label {
-          font-size: 10px;
+          font-size: 10.5px;
           font-family: 'DM Mono', monospace;
-          color: #2a3a50;
-          letter-spacing: 0.14em;
+          color: ${C.accent};
+          letter-spacing: 0.16em;
           text-transform: uppercase;
-          margin-bottom: 3px;
+          margin-bottom: 4px;
         }
         .user-name {
           font-family: 'DM Serif Display', serif;
-          font-size: 19px;
-          color: #f0f4ff;
-          letter-spacing: 0.01em;
+          font-size: 21px;
+          color: ${C.text};
+          letter-spacing: -0.2px;
           margin-bottom: 18px;
           line-height: 1.2;
           white-space: nowrap;
@@ -282,191 +299,189 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
         }
         .donut-pct {
           font-family: 'DM Mono', monospace;
-          font-size: 13px; font-weight: 500; line-height: 1;
+          font-size: 14px; font-weight: 500; line-height: 1;
           transition: color 0.4s;
         }
         .donut-label {
-          font-size: 8px; color: #4a5568;
-          text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px;
+          font-size: 8.5px; color: ${C.muted};
+          text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px;
         }
 
         .legend { flex: 1; }
         .legend-item { margin-bottom: 10px; }
         .legend-item:last-child { margin-bottom: 0; }
-        .legend-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+        .legend-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
         .legend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .legend-name { font-size: 9px; color: #3a4a60; text-transform: uppercase; letter-spacing: 0.12em; }
-        .legend-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; padding-left: 12px; line-height: 1; }
-        .legend-sub { font-size: 9px; color: #2a3a50; padding-left: 12px; margin-top: 1px; font-family: 'DM Mono', monospace; }
+        .legend-name { font-size: 10px; color: ${C.muted}; text-transform: uppercase; letter-spacing: 0.1em; }
+        .legend-val { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; padding-left: 12px; line-height: 1; }
+        .legend-sub { font-size: 10px; color: ${C.faint}; padding-left: 12px; margin-top: 3px; font-family: 'DM Mono', monospace; }
 
         .networth-strip {
-          background: #0f1520; border: 1px solid #1a2030; border-radius: 10px;
-          padding: 10px 13px; display: flex; align-items: center;
+          background: rgba(255,255,255,0.04); border: 1px solid ${C.border}; border-radius: 10px;
+          padding: 11px 13px; display: flex; align-items: center;
           justify-content: space-between; gap: 8px;
         }
-        .nw-label { font-size: 9px; color: #2a3a50; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 3px; }
+        .nw-label { font-size: 10px; color: ${C.muted}; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
         .nw-value { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; line-height: 1; }
-        .nw-badge { font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
+        .nw-badge { font-size: 10.5px; font-family: 'DM Mono', monospace; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
 
-        .gain-row { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; padding: 0 1px; }
-        .gain-item { display: flex; flex-direction: column; gap: 1px; }
-        .gain-label { font-size: 9px; color: #2a3a50; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'DM Mono', monospace; }
-        .gain-val { font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500; }
+        .gain-row { display: flex; justify-content: space-between; align-items: center; margin-top: 9px; padding: 0 1px; }
+        .gain-item { display: flex; flex-direction: column; gap: 2px; }
+        .gain-label { font-size: 9.5px; color: ${C.muted}; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+        .gain-val { font-size: 12.5px; font-family: 'DM Mono', monospace; font-weight: 500; }
 
         .nav {
           flex: 1; padding: 12px 10px;
-          min-height: 0vh;
-          display: flex; flex-direction: column; gap: 2px;
+          min-height: 0;
+          display: flex; flex-direction: column; gap: 3px;
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.05s;
-          overflow: hidden;
+          overflow-y: auto;
         }
         .nav-item {
           display: flex; align-items: center; gap: 11px;
           padding: 10px 11px; border-radius: 10px; cursor: pointer;
-          transition: all 0.16s ease; color: #3a4a60;
-          font-size: 13px; font-weight: 400;
+          transition: all 0.16s ease; color: ${C.body};
+          font-size: 14px; font-weight: 400;
           border: 1px solid transparent; position: relative; user-select: none;
         }
-        .nav-item:hover { color: #7a8fa8; background: #111825; }
-        .nav-item.active { color: #e2e8f0; background: #111825; border-color: #1a2030; }
+        .nav-item:hover { color: ${C.text}; background: rgba(255,255,255,0.05); }
+        .nav-item.active { color: ${C.text}; background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.25); font-weight: 500; }
         .nav-item.active::before {
           content: ''; position: absolute; left: 0; top: 50%;
           transform: translateY(-50%); width: 3px; height: 55%;
-          background: #34d399; border-radius: 0 3px 3px 0;
+          background: ${C.accent}; border-radius: 0 3px 3px 0;
         }
-        .nav-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 8px; flex-shrink: 0; transition: background 0.16s, color 0.16s; }
-        .nav-item.active .nav-icon { background: rgba(52,211,153,0.1); color: #34d399; }
-        .nav-item:hover .nav-icon { background: #1a2030; }
+        .nav-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 8px; flex-shrink: 0; color: ${C.muted}; transition: background 0.16s, color 0.16s; }
+        .nav-item:hover .nav-icon { background: rgba(255,255,255,0.07); color: ${C.text}; }
+        .nav-item.active .nav-icon { background: rgba(52,211,153,0.16); color: ${C.accent}; }
         .nav-label { flex: 1; }
-        .nav-pill { font-size: 10px; font-family: 'DM Mono', monospace; padding: 2px 7px; border-radius: 20px; background: #151d2a; color: #3a4a60; transition: all 0.16s; }
-        .nav-item.active .nav-pill { background: rgba(52,211,153,0.1); color: #34d399; }
+        .nav-pill { font-size: 10.5px; font-family: 'DM Mono', monospace; padding: 2px 8px; border-radius: 20px; background: rgba(255,255,255,0.08); color: ${C.body}; transition: all 0.16s; }
+        .nav-item.active .nav-pill { background: rgba(52,211,153,0.18); color: ${C.accent}; }
 
         /* ── Bottom profile section ── */
         .bottom-section {
           padding: 10px;
-          border-top: 1px solid #1a2030;
+          border-top: 1px solid ${C.borderSoft};
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.1s;
         }
         .profile-card {
           display: flex; align-items: center; gap: 10px;
           padding: 10px 11px; border-radius: 10px;
-          background: rgba(255,255,255,0.015);
-          border: 1px solid #1a2030;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid ${C.border};
           transition: background 0.16s, border-color 0.16s;
         }
         .profile-card:hover {
-          background: #111825;
-          border-color: #1e2d40;
+          background: rgba(255,255,255,0.07);
+          border-color: rgba(255,255,255,0.18);
         }
         .profile-card-active {
-          background: #111825 !important;
-          border-color: rgba(52,211,153,0.25) !important;
+          background: rgba(52,211,153,0.08) !important;
+          border-color: rgba(52,211,153,0.35) !important;
         }
-        .profile-card-active .profile-name { color: #e2e8f0; }
         .profile-card-active .avatar {
-          box-shadow: 0 0 12px rgba(52,211,153,0.3);
+          box-shadow: 0 0 12px rgba(52,211,153,0.35);
         }
         .avatar {
-          width: 34px; height: 34px; border-radius: 9px;
-          background: linear-gradient(135deg, #34d399 0%, #0d9488 100%);
+          width: 36px; height: 36px; border-radius: 9px;
+          background: linear-gradient(135deg, ${C.accent} 0%, ${C.accentDark} 100%);
           display: flex; align-items: center; justify-content: center;
           font-family: 'DM Serif Display', serif;
-          font-size: 12px; color: #0d1117; font-weight: 700; flex-shrink: 0;
+          font-size: 13px; color: #041009; font-weight: 700; flex-shrink: 0;
           letter-spacing: 0.5px;
         }
         .profile-info { flex: 1; min-width: 0; }
         .profile-name {
-          font-size: 12.5px; font-weight: 500; color: #c8d6e8;
+          font-size: 13px; font-weight: 500; color: ${C.text};
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .profile-email {
-          font-size: 9px; color: #2a3a50; margin-top: 1px;
-          font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
+          font-size: 10px; color: ${C.muted}; margin-top: 2px;
+          font-family: 'DM Mono', monospace; letter-spacing: 0.02em;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .logout-btn {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid #1e2d40;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid ${C.border};
           cursor: pointer;
-          color: #4a6070;
+          color: ${C.body};
           display: flex; align-items: center;
           justify-content: center;
           padding: 6px; border-radius: 7px;
           transition: color 0.15s, background 0.15s, border-color 0.15s;
           flex-shrink: 0;
-          min-width: 28px; min-height: 28px;
+          min-width: 30px; min-height: 30px;
         }
         .logout-btn:hover {
-          color: #f87171;
-          background: rgba(248,113,113,0.1);
-          border-color: rgba(248,113,113,0.25);
+          color: ${C.negative};
+          background: rgba(248,113,113,0.12);
+          border-color: rgba(248,113,113,0.35);
         }
 
         .error-banner {
-          margin: 8px; padding: 8px 12px;
-          background: rgba(248,113,113,0.08);
-          border: 1px solid rgba(248,113,113,0.2);
-          border-radius: 8px; font-size: 11px; color: #f87171;
-          font-family: 'DM Mono', monospace;
+          margin: 8px 0; padding: 9px 12px;
+          background: rgba(248,113,113,0.10);
+          border: 1px solid rgba(248,113,113,0.35);
+          border-radius: 8px; font-size: 12px; color: #fecaca;
+          font-family: 'DM Sans', sans-serif;
           display: flex; align-items: center; justify-content: space-between;
           gap: 8px; cursor: pointer;
         }
 
         /* ── Auth buttons (logged-out state) ── */
         .auth-section {
-          padding: 10px;
-          border-top: 1px solid #1a2030;
+          padding: 12px 10px;
+          border-top: 1px solid ${C.borderSoft};
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.1s;
         }
         .auth-btn {
           width: 100%;
-          padding: 9px 14px;
+          padding: 10px 14px;
           border-radius: 10px;
           font-family: 'DM Sans', sans-serif;
-          font-size: 12.5px;
-          font-weight: 500;
+          font-size: 13px;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.16s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 7px;
-          letter-spacing: 0.01em;
+          gap: 8px;
+          letter-spacing: 0.02em;
         }
         .auth-btn-login {
-          background: rgba(52,211,153,0.08);
-          border: 1px solid rgba(52,211,153,0.2);
-          color: #34d399;
+          background: linear-gradient(135deg, ${C.accent}, ${C.accentDark});
+          border: none;
+          color: #041009;
+          box-shadow: 0 0 24px rgba(52,211,153,0.2);
         }
         .auth-btn-login:hover {
-          background: rgba(52,211,153,0.15);
-          border-color: rgba(52,211,153,0.4);
-          color: #6ee7b7;
+          box-shadow: 0 0 36px rgba(52,211,153,0.35);
+          opacity: 0.92;
         }
         .auth-btn-register {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid #1e2d40;
-          color: #4a6070;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.22);
+          color: ${C.text};
+          font-weight: 500;
         }
         .auth-btn-register:hover {
-          background: #111825;
-          border-color: #2a3a50;
-          color: #7a8fa8;
+          border-color: ${C.accent};
+          color: ${C.accent};
         }
         .auth-tagline {
           text-align: center;
-          font-size: 9px;
+          font-size: 10px;
           font-family: 'DM Mono', monospace;
-          color: #1e2d3a;
-          letter-spacing: 0.1em;
+          color: ${C.muted};
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          margin-bottom: 8px;
           padding-top: 2px;
         }
       `}</style>
@@ -486,13 +501,13 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
 
         {/* ── Top section ── */}
         <div className="top-section">
-          <div className="portfolio-label">{user ? "Portfolio" : "Vaultfolio"}</div>
+          <div className="portfolio-label">{user ? "Portfolio" : "Maadalla"}</div>
           <div className="user-name">{user ? user.name : "Welcome back"}</div>
 
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 4 }}>
-                <div style={{ width: 108, height: 108, borderRadius: "50%", background: "#1a2030", flexShrink: 0 }} />
+                <div style={{ width: 108, height: 108, borderRadius: "50%", background: "rgba(255,255,255,0.06)", flexShrink: 0 }} />
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
                   <Skeleton w="70%" h={12} r={4} />
                   <Skeleton w="90%" h={18} r={4} />
@@ -505,7 +520,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           ) : error ? (
             <div className="error-banner" onClick={fetchData} title="Click to retry">
               <span>⚠ Failed to load data</span>
-              <span style={{ fontSize: 10, color: "#7f1d1d" }}>retry ↺</span>
+              <span style={{ fontSize: 11, color: C.text }}>retry ↺</span>
             </div>
           ) : (
             <>
@@ -521,18 +536,18 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
                 <div className="legend">
                   <div className="legend-item">
                     <div className="legend-top">
-                      <div className="legend-dot" style={{ background: "#34d399" }} />
+                      <div className="legend-dot" style={{ background: C.accent }} />
                       <span className="legend-name">Assets</span>
                     </div>
-                    <div className="legend-val" style={{ color: "#34d399" }}>{fmt(totalAssets)}</div>
+                    <div className="legend-val" style={{ color: C.accent }}>{fmt(totalAssets)}</div>
                     <div className="legend-sub">{data.assets.length} positions</div>
                   </div>
                   <div className="legend-item">
                     <div className="legend-top">
-                      <div className="legend-dot" style={{ background: "#f87171" }} />
+                      <div className="legend-dot" style={{ background: C.negative }} />
                       <span className="legend-name">Liabilities</span>
                     </div>
-                    <div className="legend-val" style={{ color: "#f87171" }}>{fmt(totalLiab)}</div>
+                    <div className="legend-val" style={{ color: C.negative }}>{fmt(totalLiab)}</div>
                     <div className="legend-sub">{data.liabilities.length} debts</div>
                   </div>
                 </div>
@@ -541,14 +556,14 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
               <div className="networth-strip">
                 <div>
                   <div className="nw-label">Net Worth</div>
-                  <div className="nw-value" style={{ color: netWorth >= 0 ? "#f0f4ff" : "#f87171" }}>
+                  <div className="nw-value" style={{ color: netWorth >= 0 ? C.text : C.negative }}>
                     {fmtFull(netWorth)}
                   </div>
                 </div>
                 <div className="nw-badge" style={{
-                  color:      totalGain >= 0 ? "#34d399" : "#f87171",
-                  background: totalGain >= 0 ? "rgba(52,211,153,0.1)" : "rgba(248,113,113,0.1)",
-                  border:     `1px solid ${totalGain >= 0 ? "rgba(52,211,153,0.2)" : "rgba(248,113,113,0.2)"}`,
+                  color:      totalGain >= 0 ? C.accent : C.negative,
+                  background: totalGain >= 0 ? "rgba(52,211,153,0.12)" : "rgba(248,113,113,0.12)",
+                  border:     `1px solid ${totalGain >= 0 ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.3)"}`,
                 }}>
                   {totalGain >= 0 ? "↑" : "↓"} {Math.abs(totalGainPct).toFixed(1)}%
                 </div>
@@ -557,11 +572,11 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
               <div className="gain-row">
                 <div className="gain-item">
                   <span className="gain-label">Invested</span>
-                  <span className="gain-val" style={{ color: "#64748b" }}>{fmt(totalInvested)}</span>
+                  <span className="gain-val" style={{ color: C.body }}>{fmt(totalInvested)}</span>
                 </div>
                 <div className="gain-item" style={{ alignItems: "flex-end" }}>
                   <span className="gain-label">All-time gain</span>
-                  <span className="gain-val" style={{ color: totalGain >= 0 ? "#34d399" : "#f87171" }}>
+                  <span className="gain-val" style={{ color: totalGain >= 0 ? C.accent : C.negative }}>
                     {totalGain >= 0 ? "+" : ""}{fmt(totalGain)}
                   </span>
                 </div>
@@ -608,6 +623,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
                 className="logout-btn"
                 onClick={(e) => { e.stopPropagation(); onLogout(); }}
                 title="Log out"
+                aria-label="Log out"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
