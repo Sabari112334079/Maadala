@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, Sector } from "recharts";
 
-const ASSETS_API = "http://localhost:5000/api/assets";
-const LIABILITIES_API = "http://localhost:5000/api/liabilities";
-const TRANSACTIONS_API = "http://localhost:5000/api/transactions/summary";
+const ASSETS_API = `${import.meta.env.VITE_API_URL}/assets`;
+const LIABILITIES_API =`${import.meta.env.VITE_API_URL}/liabilities`;
+const TRANSACTIONS_API =`${import.meta.env.VITE_API_URL}/transactions/summary`;;
 
 // ─── Theme (shared with HomePage / Transactions) ──────────────────────────────
 const C = {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-const API = "http://localhost:5000/api/auth";
+const API = `${import.meta.env.VITE_API_URL}/auth`;
+
 
 // ─── Theme (shared with HomePage / Transactions / Reports) ────────────────────
 const C = {

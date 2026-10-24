@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://localhost:5000/api/assets";
+const API_BASE = `${import.meta.env.VITE_API_URL}/assets`;
 
 // ─── Theme (shared with Home / Auth / Sidebar) ────────────────────────────────
 const C = {

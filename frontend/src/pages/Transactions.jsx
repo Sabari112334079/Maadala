@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "http://localhost:5000/api/transactions";
+const API_BASE = `${import.meta.env.VITE_API_URL}/transactions`;
 
 // ─── Theme (shared with HomePage) ─────────────────────────────────────────────
 const C = {

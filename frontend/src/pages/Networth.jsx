@@ -11,8 +11,8 @@ import {
   Legend,
 } from "recharts";
 
-const ASSETS_API      = "http://localhost:5000/api/assets";
-const LIABILITIES_API = "http://localhost:5000/api/liabilities";
+const ASSETS_API      =`${import.meta.env.VITE_API_URL}/assets`;
+const LIABILITIES_API = `${import.meta.env.VITE_API_URL}/liabilities`;
 
 // ─── Theme (shared with the rest of the app) ──────────────────────────────────
 const C = {
