@@ -6,7 +6,8 @@ const DEVELOPER = {
   firstName: "Sabari",
   role: "Full Stack & Desktop Developer",
   location: "Tamil Nadu, India",
-  imageUrl: "/images/sabari.png", // falls back to initials if missing
+  // Default image (served from /public/images). Override it with the `image` prop.
+  imageUrl: "/developer.png",
   email: "sabariragu2006@gmail.com",
   bio: "Hi, I'm Sabari — a developer passionate about building practical web applications that solve real-world problems. Maadalla is my personal finance tracking project, built to make asset management, liability tracking, and net worth analysis easier through a unified, intuitive interface.",
   availability: "Open to Developer Opportunities",
@@ -16,7 +17,7 @@ const DEVELOPER = {
 const LINKS = [
   { id: "github", label: "GitHub", handle: "sabariragu2006", href: "https://github.com/sabariragu2006" },
   { id: "linkedin", label: "LinkedIn", handle: "in/sabariragu", href: "https://www.linkedin.com/in/sabariragu/" },
-  { id: "globe", label: "Portfolio", handle: "baby-tech.netlify.app", href: "https://baby-tech.netlify.app/" },
+  { id: "globe", label: "Portfolio", handle: "sabariragu2006.netlify.app", href: "https://sabariragu2006.netlify.app/" },
 ];
 
 const TRUST = ["Open to freelance", "Offline-capable apps", "AI-powered solutions", "SQLite specialist"];
@@ -39,15 +40,14 @@ const SKILLS = [
 
 const PROJECTS = [
   {
-    id: "maadalla",
+    id: "rsinfotech",
     glyph: "◈",
-    name: "Maadalla",
-    tagline: "Personal Finance Tracker",
-    desc: "A full-stack web app for tracking assets, liabilities, net worth and every transaction, with charts, reports and automatic logging.",
-    tech: ["React.js", "Node.js", "MongoDB", "Express.js", "Chart.js"],
-    badge: "Live · Web App",
-    liveUrl: "https://dulcet-phoenix-32f7f5.netlify.app/",
-    githubUrl: "https://github.com/sabariragu2006/",
+    name: "RS Infotech",
+    tagline: "Business Website & Local SEO",
+    desc: "A professional website with local SEO for a Kanchipuram security services business, built to help nearby customers find and contact them.",
+    tech: ["Web Development", "Local SEO", "Responsive Design"],
+    badge: "Live · Client Website",
+    liveUrl: "https://rsinfotech.in/",
   },
   {
     id: "thugil",
@@ -61,15 +61,14 @@ const PROJECTS = [
     githubUrl: "https://github.com/sabariragu2006/",
   },
   {
-    id: "vidhagam",
+    id: "babytech",
     glyph: "◉",
-    name: "Vidhagam",
-    tagline: "AI-Powered SQLite Manager",
-    desc: "Professional desktop SQLite manager with a VS Code-style dark UI and built-in Gemini AI assistance.",
-    tech: ["C#", "WPF", ".NET 8", "SQLite", "Gemini AI"],
-    badge: "Desktop App",
-    downloadUrl: "/downloads/Vidhagam_SQLiteManager_Setup.exe",
-    githubUrl: "https://github.com/sabariragu2006/",
+    name: "Baby Tech",
+    tagline: "Web Development & SEO Services",
+    desc: "My web development and local SEO services site, showcasing the websites and digital solutions I build for small businesses.",
+    tech: ["React.js", "Web Development", "Local SEO"],
+    badge: "Live · Website",
+    liveUrl: "https://baby-tech.netlify.app/",
   },
 ];
 
@@ -208,12 +207,12 @@ html, body { width: 100%; margin: 0; padding: 0; background: #07080d; }
 }
 .dv-back:hover, .dv-back:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
 .dv-nav-links { display: flex; gap: 32px; align-items: center; }
+/* every nav link shares one style; no "active page" highlight */
 .dv-nav-link {
   background: none; border: 0; padding: 4px 0; font-size: 13px; letter-spacing: .02em;
   color: var(--body); transition: color .15s;
 }
 .dv-nav-link:hover, .dv-nav-link:focus-visible { color: var(--text); outline: none; }
-.dv-nav-link.is-active { color: var(--accent); cursor: default; }
 .dv-nav-actions { display: flex; gap: 10px; align-items: center; }
 .dv-nav-actions .dv-btn { padding: 9px 18px; }
 
@@ -229,13 +228,13 @@ html, body { width: 100%; margin: 0; padding: 0; background: #07080d; }
   background: radial-gradient(circle, rgba(52,211,153,0.24), transparent 68%); filter: blur(8px);
 }
 .dv-avatar {
-  width: 124px; height: 124px; border-radius: 32%; overflow: hidden; display: grid; place-items: center;
+  width: 176px; aspect-ratio: 896 / 1200; border-radius: 24px; overflow: hidden; display: grid; place-items: center;
   border: 1px solid rgba(52,211,153,0.5);
   background: linear-gradient(145deg, rgba(52,211,153,0.14), rgba(13,148,136,0.06));
   box-shadow: 0 0 0 6px rgba(52,211,153,0.05), 0 0 44px rgba(52,211,153,0.18);
 }
-.dv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.dv-avatar span { font-family: var(--serif); font-size: 44px; color: var(--accent); }
+.dv-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.dv-avatar span { font-family: var(--serif); font-size: 58px; color: var(--accent); }
 .dv-status-dot {
   position: absolute; right: 6px; bottom: 6px; width: 14px; height: 14px; border-radius: 50%;
   background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 10px var(--accent);
@@ -420,6 +419,7 @@ html, body { width: 100%; margin: 0; padding: 0; background: #07080d; }
 @media (max-width: 640px) {
   .dv-wrap, .dv-topbar { padding-left: 20px; padding-right: 20px; }
   .dv-hero { padding: 56px 20px 48px; }
+  .dv-avatar { width: 148px; }
   .dv-section { padding-top: 60px; }
   .dv-nav-links { display: none; }
   .dv-skills { grid-template-columns: 1fr; }
@@ -440,10 +440,24 @@ html, body { width: 100%; margin: 0; padding: 0; background: #07080d; }
 `;
 
 /* ───────────── Component ───────────── */
-export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, onRegister }) {
+/**
+ * Props
+ *  - image:      developer photo. A public path ("/images/sabari.png"), a full URL,
+ *                or an imported asset (import me from "../assets/sabari.jpg").
+ *                Falls back to DEVELOPER.imageUrl, then to initials if it fails to load.
+ *  - onBack / onHome / onFeatures / onLogin / onRegister: optional nav callbacks.
+ */
+export default function DeveloperSection({ image, onBack, onHome, onFeatures, onLogin, onRegister }) {
   const rootRef = useRef(null);
   const [imgFailed, setImgFailed] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const imageSrc = image || DEVELOPER.imageUrl;
+
+  // Try again whenever a new image is supplied
+  useEffect(() => {
+    setImgFailed(false);
+  }, [imageSrc]);
 
   /* fade-up reveal for every .dv-reveal block */
   useEffect(() => {
@@ -482,7 +496,7 @@ export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, 
   };
 
   const initials = DEVELOPER.name.split(" ").map((n) => n[0]).join("").slice(0, 2);
-  const showImage = DEVELOPER.imageUrl && !imgFailed;
+  const showImage = imageSrc && !imgFailed;
 
   return (
     <div id="developer" className="dv-root" ref={rootRef}>
@@ -499,10 +513,10 @@ export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, 
 
           <nav className="dv-nav-links" aria-label="Main">
             <button type="button" className="dv-nav-link" onClick={onHome || onBack}>Home</button>
+            <button type="button" className="dv-nav-link" aria-current="page">Developer</button>
             {onFeatures && (
               <button type="button" className="dv-nav-link" onClick={onFeatures}>Features</button>
             )}
-            <button type="button" className="dv-nav-link is-active" aria-current="page">Developer</button>
           </nav>
 
           <div className="dv-nav-actions">
@@ -521,7 +535,7 @@ export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, 
             <div className="dv-avatar">
               {showImage ? (
                 <img
-                  src={DEVELOPER.imageUrl}
+                  src={imageSrc}
                   alt={`Portrait of ${DEVELOPER.name}`}
                   onError={() => setImgFailed(true)}
                 />
@@ -567,7 +581,7 @@ export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, 
               </a>
             ))}
             <button type="button" className="dv-social" onClick={copyEmail}>
-              <Icon name="mail" size={16} /> {copied ? "Copied!" : "Copy Email"}
+              <Icon name="mail" size={16} /> {copied ? "Copied!" : "sabariragu2006@gmail.com"}
             </button>
           </nav>
 
@@ -643,9 +657,11 @@ export default function DeveloperSection({ onBack, onHome, onFeatures, onLogin, 
                       <Icon name="download" size={14} /> Download
                     </a>
                   )}
-                  <a className="dv-btn dv-btn-ghost" href={p.githubUrl} target="_blank" rel="noopener noreferrer">
-                    <Icon name="github" size={14} /> Code
-                  </a>
+                  {p.githubUrl && (
+                    <a className="dv-btn dv-btn-ghost" href={p.githubUrl} target="_blank" rel="noopener noreferrer">
+                      <Icon name="github" size={14} /> Code
+                    </a>
+                  )}
                 </div>
               </article>
             ))}
