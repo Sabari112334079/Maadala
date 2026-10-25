@@ -128,7 +128,7 @@ function Navbar({ onLogin, onRegister,onFeatures, onDeveloper  }) {
 
   const links = [
     { label: "Get started", id: "get-started" },
-    { label: "Developer", id: "developer" },
+    { label: "Developers", id: "developer" },
     { label: "Features", id: "features" },
   ];
 

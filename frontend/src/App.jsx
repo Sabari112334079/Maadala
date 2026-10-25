@@ -11,8 +11,6 @@ import Features         from "./pages/Features";
 import AuthPage         from "./pages/AuthPage";
 import DeveloperSection from "./pages/DeveloperSection";
 
-// Must match the key AuthPage writes on login/register
-const TOKEN_KEY  = "Maadalla_token";
 
 import { API_BASE, TOKEN_KEY } from "./pages/AuthPage";
 
