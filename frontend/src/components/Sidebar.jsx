@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+const API_URL = import.meta.env.VITE_API_URL;
 
-const ASSETS_API = "http://localhost:5000/api/assets";
-const LIABILITIES_API = "http://localhost:5000/api/liabilities";
-const TRANSACTIONS_API = "http://localhost:5000/api/transactions";
+const ASSETS_API = `${API_URL}/assets`;
+const LIABILITIES_API = `${API_URL}/liabilities`;
+const TRANSACTIONS_API = `${API_URL}/transactions`;
 
 // ─── Theme (shared with HomePage / AuthPage) ──────────────────────────────────
 const C = {
