@@ -76,11 +76,14 @@ const NAV_ITEMS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Compact currency (₹). Fixed: the old version had a typo ("₹{") that printed
+// raw code for values over a million, and a "$" fallback for small values.
 function fmt(n) {
-  const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${n < 0 ? "-" : ""}₹{(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000)     return `${n < 0 ? "-" : ""}₹${(abs / 1_000).toFixed(1)}K`;
-  return `${n < 0 ? "-$" : "$"}${abs.toLocaleString()}`;
+  const sign = n < 0 ? "-" : "";
+  const abs  = Math.abs(n);
+  if (abs >= 1_000_000) return `${sign}₹${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)     return `${sign}₹${(abs / 1_000).toFixed(1)}K`;
+  return `${sign}₹${abs.toLocaleString("en-IN")}`;
 }
 
 function fmtFull(n) {
@@ -165,8 +168,13 @@ function Skeleton({ w = "100%", h = 14, r = 6, mb = 0 }) {
 }
 
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
+// Props `open` / `onClose` control the slide-in drawer on small screens
+// (≤ 900px). On desktop the sidebar is always visible and they are ignored.
 
-export default function Sidebar({ active, setActive, onLogout, onLogin, onRegister, user }) {
+export default function Sidebar({
+  active, setActive, onLogout, onLogin, onRegister, user,
+  open = false, onClose,
+}) {
   const [data,    setData]    = useState({ assets: [], liabilities: [], txCount: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(false);
@@ -199,6 +207,20 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
     const interval = setInterval(fetchData, 60_000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close the drawer with the Escape key
+  useEffect(() => {
+    if (!open || !onClose) return;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  // Navigate, then close the drawer (no-op on desktop)
+  const go = (id) => {
+    setActive(id);
+    if (onClose) onClose();
+  };
 
   // ── Derived values ──
   const totalAssets = data.assets.reduce(
@@ -236,13 +258,17 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .sidebar {
           width: 260px;
-          max-height: 100vh;
           height: 100vh;
+          height: 100dvh;
           background: linear-gradient(160deg, #0a121a 0%, #060b11 100%);
           display: flex;
           flex-direction: column;
@@ -264,11 +290,14 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           pointer-events: none;
         }
 
+        .sidebar-backdrop { display: none; }
+
         .top-section {
           padding: 22px 16px 18px;
           border-bottom: 1px solid ${C.borderSoft};
           animation: fadeSlideIn 0.4s ease both;
           position: relative;
+          flex-shrink: 0;
         }
         .portfolio-label {
           font-size: 10.5px;
@@ -307,7 +336,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px;
         }
 
-        .legend { flex: 1; }
+        .legend { flex: 1; min-width: 0; }
         .legend-item { margin-bottom: 10px; }
         .legend-item:last-child { margin-bottom: 0; }
         .legend-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
@@ -344,6 +373,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           transition: all 0.16s ease; color: ${C.body};
           font-size: 14px; font-weight: 400;
           border: 1px solid transparent; position: relative; user-select: none;
+          flex-shrink: 0;
         }
         .nav-item:hover { color: ${C.text}; background: rgba(255,255,255,0.05); }
         .nav-item.active { color: ${C.text}; background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.25); font-weight: 500; }
@@ -365,6 +395,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           border-top: 1px solid ${C.borderSoft};
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.1s;
+          flex-shrink: 0;
         }
         .profile-card {
           display: flex; align-items: center; gap: 10px;
@@ -439,6 +470,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           gap: 8px;
           animation: fadeSlideIn 0.5s ease both;
           animation-delay: 0.1s;
+          flex-shrink: 0;
         }
         .auth-btn {
           width: 100%;
@@ -484,20 +516,51 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           text-transform: uppercase;
           padding-top: 2px;
         }
+
+        /* ───────── Responsive: slide-in drawer on tablets & phones ───────── */
+        @media (max-width: 900px) {
+          .sidebar {
+            width: min(300px, 86vw);
+            transform: translateX(-100%);
+            visibility: hidden;
+            box-shadow: none;
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.28s;
+          }
+          .sidebar.is-open {
+            transform: translateX(0);
+            visibility: visible;
+            box-shadow: 24px 0 60px rgba(0,0,0,0.55);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
+          }
+          .sidebar-backdrop {
+            display: block;
+            position: fixed; inset: 0; z-index: 99;
+            background: rgba(3,5,9,0.66);
+            -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+            animation: fadeIn 0.2s ease both;
+          }
+          .nav-item { padding: 12px 11px; }   /* larger touch targets */
+        }
+
+        /* Short screens: let the whole drawer scroll instead of clipping */
+        @media (max-height: 640px) {
+          .sidebar { overflow-y: auto; }
+          .nav { overflow: visible; flex: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sidebar, .sidebar.is-open { transition: none !important; }
+        }
       `}</style>
 
-      <aside className="sidebar" style={{
-        width: 260,
-        height: "100vh",
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        zIndex: 100,
-      }}>
+      {open && onClose && (
+        <div className="sidebar-backdrop" onClick={onClose} aria-hidden="true" />
+      )}
+
+      <aside
+        className={`sidebar${open ? " is-open" : ""}`}
+        aria-label="Main navigation"
+      >
 
         {/* ── Top section ── */}
         <div className="top-section">
@@ -591,7 +654,10 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
             <div
               key={item.id}
               className={`nav-item${active === item.id ? " active" : ""}`}
-              onClick={() => setActive(item.id)}
+              onClick={() => go(item.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(item.id); } }}
             >
               <div className="nav-icon">{item.icon}</div>
               <span className="nav-label">{item.label}</span>
@@ -609,7 +675,7 @@ export default function Sidebar({ active, setActive, onLogout, onLogin, onRegist
           <div className="bottom-section">
             <div
               className={`profile-card${active === "profile" ? " profile-card-active" : ""}`}
-              onClick={() => setActive("profile")}
+              onClick={() => go("profile")}
               role="button"
               title="Open profile settings"
               style={{ cursor: "pointer" }}
