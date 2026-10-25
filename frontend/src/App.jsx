@@ -13,8 +13,11 @@ import DeveloperSection from "./pages/DeveloperSection";
 
 // Must match the key AuthPage writes on login/register
 const TOKEN_KEY  = "Maadalla_token";
+
+import { API_BASE, TOKEN_KEY } from "./pages/AuthPage";
+
 const ACTIVE_KEY = "Maadalla_active";
-const ME_URL     = "http://localhost:5000/api/auth/me";
+const ME_URL     = `${API_BASE}/auth/me`;
 
 function App() {
   // view: "home" | "features" | "developer" | "login" | "register" | "app"
