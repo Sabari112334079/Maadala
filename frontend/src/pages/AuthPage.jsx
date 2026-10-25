@@ -1,7 +1,10 @@
 import { useState } from "react";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/`;
+const url = import.meta.env.VITE_API_URL;
+if (!url) throw new Error("VITE_API_URL is not set. Add it to your .env file and restart Vite.");
 
+export const API_BASE  = url.replace(/\/+$/, "");
+export const TOKEN_KEY = "Maadalla_token";
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const C = {
   bg:         "#07080d",
